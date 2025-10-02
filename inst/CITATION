@@ -1,0 +1,10 @@
+citHeader("To cite AMPHForecastSuite in publications use:")
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "AMPHForecastSuite: Suite of Tools for Infectious Disease Forecasting Pipeline and Hub",
+  author   = "ACCIDDA",
+  year     = 2024,
+  note     = "R package version 0.1.0",
+  url      = "https://github.com/ACCIDDA/AMPH_Forecast_Suite"
+)
