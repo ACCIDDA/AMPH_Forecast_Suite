@@ -29,6 +29,7 @@ Suggests:
     hubValidations,
     hubVis,
     hubAdmin,
+    hubEvals,
     fable,
     fabletools,
     feasts,
