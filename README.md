@@ -216,6 +216,33 @@ The package helps you install and work with:
 ### Data Access
 - epidatr: Access epidemiological data from various sources
 
+## Testing
+
+The package includes comprehensive unit tests covering all exported functions. To run the tests:
+
+```r
+# Install testthat if not already installed
+install.packages("testthat")
+
+# Run all tests
+testthat::test_local()
+```
+
+### Test Coverage
+
+The test suite includes **33 tests** across three main areas:
+
+- **Data Converters** (19 tests): Tests for converting between hub format and various forecasting package formats (fable/tsibble, EpiEstim, EpiNow2)
+- **Data Fetching** (8 tests): Tests for `get_nhsn_data()` function including parameter validation and error handling
+- **Package Installation** (6 tests): Tests for `install_forecast_packages()` utility function
+
+Tests cover:
+- Basic functionality and expected outputs
+- Edge cases (empty data, custom column names)
+- Error handling (invalid inputs, missing data)
+- Parameter validation
+- Data type conversions
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
