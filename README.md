@@ -69,6 +69,36 @@ forecasts <- model %>% forecast(h = 4)
 hub_forecasts <- convert_fable_to_hub(forecasts, location = "US")
 ```
 
+### 3. Validate Data Before Modeling
+
+Before converting data for fable models, you can validate that it meets the required format:
+
+```r
+# Validate data for fable modeling
+hub_data <- data.frame(
+  date = seq.Date(as.Date("2023-01-01"), by = "week", length.out = 20),
+  location = "US",
+  value = rnorm(20, 100, 10)
+)
+
+# Comprehensive validation - stops on error by default
+validate_fable_input_data(hub_data)
+
+# Get detailed validation results without stopping
+validation_results <- validate_fable_input_data(
+  hub_data,
+  stop_on_error = FALSE,
+  verbose = TRUE
+)
+
+# Check specific aspects
+check_date_column(hub_data)
+check_numeric_columns(hub_data)
+check_temporal_regularity(hub_data)
+check_missing_values(hub_data, c("date", "location", "value"))
+validate_tsibble_requirements(hub_data)
+```
+
 #### Hub ↔ EpiEstim
 
 ```r
@@ -128,6 +158,16 @@ hub_forecasts <- convert_epinow2_to_hub(res, location = "US")
 #### EpiNow2 Converters
 - `convert_hub_to_epinow2()`: Convert hub format to EpiNow2 format
 - `convert_epinow2_to_hub()`: Convert EpiNow2 results to hub format
+
+### Data Validation Functions
+
+#### Fable Data Validators
+- `validate_fable_input_data()`: Comprehensive validation of data for fable models
+- `validate_tsibble_requirements()`: Check tsibble-specific requirements
+- `check_date_column()`: Validate date/time column format
+- `check_numeric_columns()`: Validate numeric value columns
+- `check_missing_values()`: Check for missing values in critical columns
+- `check_temporal_regularity()`: Check time series regularity
 
 ## Forecast Evaluation with hubEvals
 
