@@ -302,7 +302,6 @@ test_that("convert_epiestim_to_hub requires estimate_R object", {
 
 test_that("convert_epiestim_to_hub handles location and target parameters", {
   skip_if_not_installed("EpiEstim")
-  skip_if_not_installed("mockery")
   
   # Create a mock EpiEstim result structure
   mock_result <- list(
