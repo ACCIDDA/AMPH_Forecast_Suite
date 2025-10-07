@@ -1,0 +1,348 @@
+---
+title: "Validating Data for Fable Models"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Validating Data for Fable Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+Before using fable for time series forecasting, it's crucial to ensure your data meets the required format and quality standards. The `AMPHForecastSuite` package provides comprehensive validation functions to check your data before converting it to tsibble format for fable modeling.
+
+This vignette demonstrates how to use the validation functions to:
+
+1. Check data structure and format
+2. Validate date/time columns
+3. Verify numeric value columns
+4. Detect missing values
+5. Check temporal regularity
+6. Validate tsibble requirements
+
+## Setup
+
+```{r setup, eval=FALSE}
+library(AMPHForecastSuite)
+library(dplyr)
+```
+
+## The Main Validation Function
+
+The `validate_fable_input_data()` function provides comprehensive validation in a single call:
+
+```{r eval=FALSE}
+# Create sample data
+hub_data <- data.frame(
+  date = seq.Date(as.Date("2023-01-01"), by = "week", length.out = 20),
+  location = "US",
+  value = rnorm(20, 100, 10)
+)
+
+# Validate data
+validate_fable_input_data(hub_data)
+```
+
+By default, this function:
+- Stops execution if validation fails (`stop_on_error = TRUE`)
+- Prints detailed messages (`verbose = TRUE`)
+- Checks date column format
+- Validates numeric columns
+- Detects missing values
+- Verifies tsibble requirements
+- Checks temporal regularity
+
+## Getting Detailed Results
+
+To get detailed validation results without stopping on errors:
+
+```{r eval=FALSE}
+result <- validate_fable_input_data(
+  hub_data,
+  stop_on_error = FALSE,
+  verbose = TRUE
+)
+
+# Check if validation passed
+if (result$valid) {
+  cat("All checks passed!\n")
+} else {
+  cat("Validation failed with", length(result$errors), "errors\n")
+  cat("Errors:\n")
+  print(result$errors)
+}
+
+# View warnings
+if (length(result$warnings) > 0) {
+  cat("Warnings:\n")
+  print(result$warnings)
+}
+
+# View successful checks
+cat("Checks passed:\n")
+print(result$checks_passed)
+```
+
+## Individual Validation Functions
+
+You can also use individual validation functions for specific checks:
+
+### Check Date Column
+
+```{r eval=FALSE}
+# Valid date column
+check_date_column(hub_data)
+
+# Get detailed results
+date_result <- check_date_column(hub_data, stop_on_error = FALSE)
+print(date_result)
+```
+
+The date column validation checks for:
+- Column existence
+- NA values in dates
+- Correct date type (Date, POSIXct, or convertible)
+- Duplicate dates (warns if found)
+
+### Check Numeric Columns
+
+```{r eval=FALSE}
+# Check single value column
+check_numeric_columns(hub_data, value_cols = "value")
+
+# Check multiple value columns
+multi_value_data <- hub_data %>%
+  mutate(deaths = rpois(n(), 5))
+
+check_numeric_columns(multi_value_data, value_cols = c("value", "deaths"))
+```
+
+The numeric column validation checks for:
+- Column existence and numeric type
+- Infinite values (error)
+- Negative values (warning)
+- Zero variance (warning)
+- All zeros (warning)
+
+### Check Missing Values
+
+```{r eval=FALSE}
+# Check for missing values in critical columns
+check_missing_values(hub_data, c("date", "location", "value"))
+
+# Allow missing values in value columns
+data_with_na <- hub_data
+data_with_na$value[5] <- NA
+
+check_missing_values(
+  data_with_na, 
+  c("date", "location", "value"),
+  allow_value_na = TRUE,
+  stop_on_error = FALSE
+)
+```
+
+### Validate Tsibble Requirements
+
+```{r eval=FALSE}
+# Check tsibble requirements
+validate_tsibble_requirements(
+  hub_data,
+  index_col = "date",
+  key_cols = "location"
+)
+```
+
+This validation checks for:
+- Duplicate key-index combinations (must be unique)
+- Sorted index within each key (warns if unsorted)
+
+### Check Temporal Regularity
+
+```{r eval=FALSE}
+# Check if time series has regular intervals
+regularity_result <- check_temporal_regularity(
+  hub_data,
+  date_col = "date",
+  key_cols = "location",
+  stop_on_error = FALSE
+)
+
+# View detected intervals
+if (regularity_result$valid) {
+  for (key in names(regularity_result$detected_intervals)) {
+    interval_info <- regularity_result$detected_intervals[[key]]
+    cat("Location:", key, "\n")
+    cat("  Interval type:", interval_info$interval_type, "\n")
+    cat("  Regular:", interval_info$regular, "\n")
+  }
+}
+```
+
+The temporal regularity check:
+- Detects the time interval (daily, weekly, monthly, yearly)
+- Verifies regular spacing between observations
+- Handles minor variations (e.g., month length differences)
+- Checks each key separately
+
+## Common Validation Scenarios
+
+### Scenario 1: Data with Multiple Locations
+
+```{r eval=FALSE}
+# Create data for multiple locations
+multi_location_data <- data.frame(
+  date = rep(seq.Date(as.Date("2023-01-01"), by = "week", length.out = 10), 3),
+  location = rep(c("US", "CA", "NY"), each = 10),
+  value = rnorm(30, 100, 10)
+)
+
+# Validate
+result <- validate_fable_input_data(
+  multi_location_data,
+  stop_on_error = FALSE,
+  verbose = FALSE
+)
+
+if (result$valid) {
+  cat("Data is ready for fable modeling!\n")
+  
+  # Convert to tsibble
+  ts_data <- convert_hub_to_tsibble(multi_location_data)
+  
+  # Now ready for fable modeling
+  # library(fable)
+  # model <- ts_data %>% model(ARIMA(value))
+}
+```
+
+### Scenario 2: Custom Column Names
+
+```{r eval=FALSE}
+# Data with custom column names
+custom_data <- data.frame(
+  time = seq.Date(as.Date("2023-01-01"), by = "day", length.out = 30),
+  region = "Europe",
+  cases = rpois(30, 100)
+)
+
+# Validate with custom column specifications
+validate_fable_input_data(
+  custom_data,
+  date_col = "time",
+  value_cols = "cases",
+  key_cols = "region"
+)
+```
+
+### Scenario 3: Handling Validation Failures
+
+```{r eval=FALSE}
+# Create problematic data
+problematic_data <- data.frame(
+  date = c(as.Date("2023-01-01"), as.Date("2023-01-01"), as.Date("2023-01-15")),
+  location = c("US", "US", NA),
+  value = c(100, 200, 300)
+)
+
+# Validate and handle errors
+result <- validate_fable_input_data(
+  problematic_data,
+  stop_on_error = FALSE,
+  verbose = FALSE
+)
+
+if (!result$valid) {
+  cat("Found", length(result$errors), "error(s):\n")
+  for (i in seq_along(result$errors)) {
+    cat(i, ".", result$errors[i], "\n")
+  }
+  
+  # Fix the data
+  # 1. Remove duplicate key-index combinations
+  # 2. Handle missing location values
+  # 3. Re-validate
+}
+```
+
+## Best Practices
+
+1. **Always validate before conversion**: Run validation before calling `convert_hub_to_tsibble()` or `convert_hub_to_fable()`.
+
+2. **Fix errors before proceeding**: Address all validation errors before attempting to fit fable models.
+
+3. **Pay attention to warnings**: While warnings don't prevent modeling, they may indicate data quality issues.
+
+4. **Check temporal regularity**: Irregular time intervals may require special handling or resampling.
+
+5. **Handle missing values appropriately**: Decide whether to impute, remove, or flag missing values based on your use case.
+
+6. **Use verbose mode during development**: Set `verbose = TRUE` to understand what checks are being performed.
+
+7. **Use non-stop mode for batch processing**: Set `stop_on_error = FALSE` when validating multiple datasets.
+
+## Integration with Fable Workflow
+
+Here's a complete workflow integrating validation:
+
+```{r eval=FALSE}
+# Step 1: Load your data
+hub_data <- data.frame(
+  date = seq.Date(as.Date("2023-01-01"), by = "week", length.out = 20),
+  location = "US",
+  value = rnorm(20, 100, 10)
+)
+
+# Step 2: Validate the data
+tryCatch({
+  validate_fable_input_data(hub_data)
+  cat("Validation passed!\n")
+}, error = function(e) {
+  cat("Validation failed:", e$message, "\n")
+  stop("Please fix data issues before proceeding")
+})
+
+# Step 3: Convert to tsibble
+ts_data <- convert_hub_to_tsibble(hub_data)
+
+# Step 4: Fit fable models
+library(fable)
+library(tsibble)
+
+model <- ts_data %>%
+  model(
+    arima = ARIMA(value),
+    ets = ETS(value)
+  )
+
+# Step 5: Generate forecasts
+forecasts <- model %>% forecast(h = 4)
+
+# Step 6: Convert back to hub format
+hub_forecasts <- convert_fable_to_hub(forecasts, location = "US")
+```
+
+## Summary
+
+The validation functions in `AMPHForecastSuite` help ensure your data is properly formatted before using it with fable models. Key benefits include:
+
+- **Early error detection**: Catch data issues before modeling
+- **Clear error messages**: Understand exactly what needs to be fixed
+- **Flexible validation**: Use comprehensive or individual checks
+- **Customizable behavior**: Stop on error or collect all issues
+- **Integration ready**: Seamlessly integrate with existing workflows
+
+For more information, see the function documentation:
+- `?validate_fable_input_data`
+- `?check_date_column`
+- `?check_numeric_columns`
+- `?check_missing_values`
+- `?validate_tsibble_requirements`
+- `?check_temporal_regularity`
