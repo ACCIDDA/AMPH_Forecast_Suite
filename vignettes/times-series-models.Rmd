@@ -10,13 +10,45 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{r set-params}
+
+state_name <- "Maryland"
+
+```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(AMPHForecastSuite)
+# Install CRAN deps first (safe if already installed)
+cran_pkgs <- c(
+  "remotes", "jsonlite", "readr", "dplyr", "tidyr", "tibble", "forecast"
+)
+to_install <- setdiff(cran_pkgs, rownames(installed.packages()))
+if (length(to_install)) install.packages(to_install, dependencies = TRUE)
 
-state_name <- "Maryland"
+# Install AMPHForecastSuite from GitHub if missing (set AMPH_SUITE_GH to "org/repo")
+# Example: Sys.setenv(AMPH_SUITE_GH = "JH-AMPH/AMPHForecastSuite")
+if (!requireNamespace("AMPHForecastSuite", quietly = TRUE)) {
+  suite_repo <- Sys.getenv("AMPH_SUITE_GH", unset = "")
+  if (nzchar(suite_repo)) {
+    remotes::install_github(suite_repo, upgrade = "never", dependencies = TRUE)
+  } else {
+    message(
+      "AMPHForecastSuite not found. Set AMPH_SUITE_GH='org/repo' to auto-install, ",
+      "or install it manually before knitting."
+    )
+  }
+}
+
+# Load packages
+library(AMPHForecastSuite)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(forecast)
+library(jsonlite)
+library(readr)
 
 ```
 
@@ -160,7 +192,7 @@ fc <- fit %>% forecast(h = 4)
 data_fc <- data.frame(horizon = 1:4) %>%
   mutate(
     origin_date = as.Date(data_fit$date[length(data_fit$date)]) + 7,
-    location = state_name,
+    location_id = state_name,
     target = "inc hosp",
     `0.025` = fc$lower[, 2],
     `0.1` = fc$lower[, 1],
@@ -217,7 +249,7 @@ fc <- forecast(fit,
 data_fc <- data.frame(horizon = 1:4) %>%
   mutate(
     origin_date = as.Date(data_fit$date[length(data_fit$date)]) + 7,
-    location = state_name,
+    location_id = state_name,
     target = "inc hosp",
     `0.025` = fc$lower[, 2],
     `0.1` = fc$lower[, 1],
