@@ -1,0 +1,290 @@
+---
+title: "AMPH 2025: Forecasting with Time Series Models"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+```{r set-params}
+
+state_name <- "Maryland"
+
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Install CRAN deps first (safe if already installed)
+cran_pkgs <- c(
+  "remotes", "jsonlite", "readr", "dplyr", "tidyr", "tibble", "forecast"
+)
+to_install <- setdiff(cran_pkgs, rownames(installed.packages()))
+if (length(to_install)) install.packages(to_install, dependencies = TRUE)
+
+# Install AMPHForecastSuite from GitHub if missing (set AMPH_SUITE_GH to "org/repo")
+# Example: Sys.setenv(AMPH_SUITE_GH = "JH-AMPH/AMPHForecastSuite")
+if (!requireNamespace("AMPHForecastSuite", quietly = TRUE)) {
+  suite_repo <- Sys.getenv("AMPH_SUITE_GH", unset = "")
+  if (nzchar(suite_repo)) {
+    remotes::install_github(suite_repo, upgrade = "never", dependencies = TRUE)
+  } else {
+    message(
+      "AMPHForecastSuite not found. Set AMPH_SUITE_GH='org/repo' to auto-install, ",
+      "or install it manually before knitting."
+    )
+  }
+}
+
+# Load packages
+library(AMPHForecastSuite)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(forecast)
+library(jsonlite)
+library(readr)
+
+```
+
+
+# Clone or pull updates from the FluSight data repo
+
+```{r clone-repo}
+
+# Ensure Git is available
+has_git <- tryCatch(
+  system2("git", "--version", stdout = TRUE, stderr = TRUE),
+  error = function(e) NA
+)
+if (any(is.na(has_git))) stop("Git does not appear to be installed or on PATH.")
+
+repo_dir <- "FluSight-forecast-hub"
+
+# Clone into working directory if not present
+if (!dir.exists(repo_dir)) {
+  message("Cloning repository...")
+  status <- system2("git", c("clone", "https://github.com/cdcepi/FluSight-forecast-hub.git"),
+                    stdout = TRUE, stderr = TRUE)
+  cat(paste(status, collapse = "\n"), "\n")
+} else {
+  message("Repository exists. Pulling latest changes...")
+
+  # Check it's actually a git repo
+  is_repo <- tryCatch(
+    system2("git", c("-C", repo_dir, "rev-parse", "--is-inside-work-tree"),
+            stdout = TRUE, stderr = TRUE),
+    error = function(e) "false"
+  )
+
+  if (identical(trimws(is_repo), "true")) {
+    # Warn if there are local changes
+    dirty <- trimws(paste(system2("git", c("-C", repo_dir, "status", "--porcelain"),
+                                  stdout = TRUE), collapse = "\n"))
+    if (nchar(dirty) > 0) {
+      message("⚠️ Local changes detected in ", repo_dir, 
+              ". Pulling with --ff-only (won't overwrite local work).")
+    }
+
+    # Fetch and pull (fast-forward only)
+    fetch_out <- system2("git", c("-C", repo_dir, "fetch", "--prune"),
+                         stdout = TRUE, stderr = TRUE)
+    pull_out  <- system2("git", c("-C", repo_dir, "pull", "--ff-only", "--quiet"),
+                         stdout = TRUE, stderr = TRUE)
+
+    # Show any messages from Git
+    if (length(fetch_out)) cat(paste(fetch_out, collapse = "\n"), "\n")
+    if (length(pull_out))  cat(paste(pull_out,  collapse = "\n"), "\n")
+    message("Pull complete.")
+  } else {
+    stop(sprintf("Path '%s' exists but is not a Git repository.", repo_dir))
+  }
+}
+
+# Normalize path for downstream code
+dir_path <- normalizePath(repo_dir)
+message("Using dir_path: ", dir_path)
+
+```
+
+
+# Choose forecast round (reference date)
+
+```{r choose-round}
+
+# Read submission (reference) dates from hub-config/tasks.json
+tasks_path <- file.path(dir_path, "hub-config", "tasks.json")
+tasks <- jsonlite::read_json(tasks_path)
+
+# Extract reference dates from the first round / first model task
+dates_archive <- unlist(tasks$rounds[[1]]$model_tasks[[1]]$task_ids$reference_date$optional)
+dates_archive <- as.Date(dates_archive)
+dates_archive <- dates_archive[dates_archive <= Sys.Date()]
+
+# ---- Set reference date of interest ----
+# Option 1: most recent submission date
+# curr_origin_date <- max(dates_archive, na.rm = TRUE)
+
+# Option 2: explicit date (must be one of the submission dates)
+curr_origin_date <- as.Date("2025-01-18")
+
+# Option 3: pick by index (e.g., 12th date)
+# curr_origin_date <- dates_archive[12]
+
+if (!curr_origin_date %in% dates_archive) {
+  stop("Chosen curr_origin_date is not a valid submission date in the Hub.")
+}
+
+```
+
+# Load target (observed) data
+
+```{r read-target}
+
+# # If loading most recent data: 
+# target_path <- file.path(dir_path, "target-data", "time-series.csv")
+# target_data_all <- readr::read_csv(target_path, show_col_types = FALSE)
+
+
+# If loading from a specific date: 
+date_str <- format(as.Date(curr_origin_date), "%Y-%m-%d")
+target_filename <- paste0(date_str, "_flu_target_hospital_admissions_data.csv")
+
+target_path <- file.path(
+  dir_path,
+  "weekly-summaries",
+  date_str,
+  target_filename
+)
+
+target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) 
+
+```
+
+
+```{r data-prep}
+
+data_fit <- target_data_all %>%
+  dplyr::filter(location_name == state_name,
+                week_ending_date > as.Date("2022-08-01")) %>%
+  dplyr::select(-location) %>%
+  dplyr::rename(location = location_name,
+                count = value,
+                date = week_ending_date)
+
+```
+
+
+# SARIMA (forecast package)
+
+```{r sarima-model}
+
+library(forecast)
+
+fit <- auto.arima(data_fit$count, seasonal = T)
+fc <- fit %>% forecast(h = 4)
+
+data_fc <- data.frame(horizon = 1:4) %>%
+  mutate(
+    origin_date = as.Date(data_fit$date[length(data_fit$date)]) + 7,
+    location_id = state_name,
+    target = "inc hosp",
+    `0.025` = fc$lower[, 2],
+    `0.1` = fc$lower[, 1],
+    `0.5` = fc$mean,
+    `0.9` = fc$upper[, 1],
+    `0.975` = fc$upper[, 2],
+    model = "NEC_SARIMA",
+    output_type = "quantile"
+  )
+
+data_fc <- as_tibble(data_fc)
+data_long <- gather(data_fc, key = output_type_id, value = value, `0.025`:`0.975`)
+data_long$value <- as.numeric(data_long$value)  
+data_long$value[which(data_long$value < 0)] <- 0
+
+```
+
+
+```{r save-sarima-output}
+
+## Write data file
+reference_date <- data_long$origin_date[1]
+output_path <- file.path(dir_path, "model-output")
+new_folder <- file.path(output_path, "AMPH-SARIMA")  
+
+# Create the folder if it doesn't exist
+if (!dir.exists(new_folder)) {
+  dir.create(new_folder, recursive = TRUE)
+  message("Created folder: ", new_folder)
+} else {
+  message("Folder already exists: ", new_folder)
+}
+
+
+write.csv(data_long, 
+          file.path(new_folder, 
+                    sprintf("%s-AMPH-SARIMA.csv", reference_date)))
+                    
+
+```
+
+
+
+# Neural network model (forecast package)
+
+```{r neuralnet-model}
+
+fit <- nnetar(data_fit$count)
+
+fc <- forecast(fit,
+               PI = TRUE,
+               h = 4)
+
+data_fc <- data.frame(horizon = 1:4) %>%
+  mutate(
+    origin_date = as.Date(data_fit$date[length(data_fit$date)]) + 7,
+    location_id = state_name,
+    target = "inc hosp",
+    `0.025` = fc$lower[, 2],
+    `0.1` = fc$lower[, 1],
+    `0.5` = fc$mean,
+    `0.9` = fc$upper[, 1],
+    `0.975` = fc$upper[, 2],
+    model = "AMPH-neuralnetwork",
+    output_type = "quantile"
+  )
+
+data_long <- gather(data_fc, key = output_type_id, value = value, `0.025`:`0.975`)
+
+
+```
+
+
+```{r save-neuralnet-output}
+
+## Write data file
+reference_date <- data_long$origin_date[1]
+output_path <- file.path(dir_path, "model-output")
+new_folder <- file.path(output_path, "AMPH-neuralnetwork")  
+
+# Create the folder if it doesn't exist
+if (!dir.exists(new_folder)) {
+  dir.create(new_folder, recursive = TRUE)
+  message("Created folder: ", new_folder)
+} else {
+  message("Folder already exists: ", new_folder)
+}
+
+
+write.csv(data_long, 
+          file.path(new_folder, 
+                    sprintf("%s-AMPH-neuralnetwork.csv", reference_date)))
+                    
+
+```

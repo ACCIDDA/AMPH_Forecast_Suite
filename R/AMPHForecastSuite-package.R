@@ -32,6 +32,7 @@ NULL
 #'   \item \code{\link{convert_epiestim_to_hub}}: Convert EpiEstim results to hub format
 #'   \item \code{\link{convert_hub_to_epinow2}}: Convert hub data to EpiNow2 format
 #'   \item \code{\link{convert_epinow2_to_hub}}: Convert EpiNow2 results to hub format
+#'   \item \code{\link{get_nhsn_data}}: Retrieve data from NHSN
 #' }
 #'
 #' @docType package
