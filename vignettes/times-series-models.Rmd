@@ -23,12 +23,8 @@ forecast_date <- as.Date("2024-11-30")
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-# Install CRAN deps first (safe if already installed)
-cran_pkgs <- c(
-  "remotes", "jsonlite", "tidyverse", "forecast", "epidatr", "gitcreds"
-)
-to_install <- setdiff(cran_pkgs, rownames(installed.packages()))
-if (length(to_install)) install.packages(to_install, dependencies = TRUE)
+library(AMPHForecastSuite)
+# Run `remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")` if the package is not installed.
 
 library(tidyverse)
 library(forecast)
@@ -44,23 +40,8 @@ gitcreds_set()
 save_api_key()
 get_api_key()
 
-# Install AMPHForecastSuite from GitHub if missing (set AMPH_SUITE_GH to "org/repo")
-# Example: Sys.setenv(AMPH_SUITE_GH = "JH-AMPH/AMPHForecastSuite")
-if (!requireNamespace("AMPHForecastSuite", quietly = TRUE)) {
-  suite_repo <- Sys.getenv("AMPH_SUITE_GH", unset = "")
-  if (nzchar(suite_repo)) {
-    remotes::install_github(suite_repo, dependencies = TRUE)
-  } else {
-    message(
-      "AMPHForecastSuite not found. Set AMPH_SUITE_GH='org/repo' to auto-install, ",
-      "or install it manually before knitting."
-    )
-  }
-}
-
 remotes::install_github("cmu-delphi/epipredict", upgrade = "never", dependencies = TRUE)
 remotes::install_github("cmu-delphi/epiprocess", upgrade = "never", dependencies = TRUE)
-
 
 # Load packages
 # library(AMPHForecastSuite)
@@ -157,7 +138,7 @@ if (!curr_origin_date %in% dates_archive) {
 
 ```
 
-# Load target (observed) data (NO LONGER NEEDED)
+# Load target (observed) data
 
 ```{r read-target}
 
@@ -176,52 +157,8 @@ target_path <- file.path(
   date_str,
   target_filename
 )
-
-target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) %>%
-  filter(week_ending_date < curr_origin_date)
-
 ```
 
-# Modify data frame (NO LONGER NEEDED)
-
-```{r data-prep}
-
-data_fit <- target_data_all %>%
-  dplyr::filter(location_name == state_name,
-                week_ending_date > as.Date("2022-08-01")) %>%
-  dplyr::select(-location) %>%
-  dplyr::rename(location = location_name,
-                count = value,
-                date = week_ending_date)
-```
-
-# Pull NHSN hospitalization data
-
-```{r}
-epidata <- pub_covidcast(
-  source = "nhsn",
-  signals = "*",
-  geo_type = "state",
-  time_type = "week",
-  geo_values = used_locations,
-  issues = "*"
-) %>%
-  mutate(origin_date = as.Date(time_value) - 1,
-         issue_date = as.Date(issue) - 1)
-
-epidata_filter <- epidata %>%
-  filter(signal == "confirmed_admissions_flu_ew",
-         geo_value %in% used_locations,
-         issue_date == forecast_date,
-         time_value > "2022-09-01") %>%
-  select(geo_value, origin_date, value) %>%
-  drop_na(value) %>%
-  as_epi_df(time_value = origin_date)
-
-ggplot(epidata_filter, aes(x = time_value, y = value)) +
-  geom_line() +
-  facet_wrap(~geo_value, scales = "free_y")
-```
 
 # SARIMA (forecast package)
 

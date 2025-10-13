@@ -52,6 +52,16 @@ install_forecast_packages(
 )
 ```
 
+## Setting Up Directory Structure
+Set up a directory structure for your forecasting project:
+```{r eval=FALSE}
+# Create project directory and subdirectories
+# this sets the working directory to the new project directory
+setup_file_structure(project_dir = "My_Forecast_Project")
+
+```
+
+
 
 ## Building a Complete Pipeline
 
