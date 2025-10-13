@@ -81,30 +81,11 @@ model_name <- "AMPH-sarima"
 
 ```{r sarima-model}
 
-fit_sarima <- forecast::auto.arima(target_data$value, seasonal = T, lambda = "auto")
-
-fc_sarima <- fit_sarima %>%
+fc_sarima <- forecast::auto.arima(target_data$value, 
+                                  seasonal = T, 
+                                  lambda = "auto") %>%
   forecast(h = length(forecast_horizon_wks),
-           level = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
-
-data_fc_sarima <- fc_sarima %>%
-  as.data.frame() %>%
-  mutate(horizon = forecast_horizon_wks,
-         origin_date = as.Date(target_data$time_value[length(target_data$time_value)]) + 7,
-         location_id = state_name,
-         target = target,
-         model = model_name,
-         output_type = "quantile") %>%
-  rename(`Med 50` = `Point Forecast`) %>%
-  pivot_longer(`Med 50`:`Hi 98`) %>%
-  separate(name, into = c("interval", "confidence")) %>%
-  mutate(output_type_id = case_when(interval == "Lo" ~ (50 - as.numeric(confidence)/2)/100,
-                                    interval == "Hi" ~ (50 + as.numeric(confidence)/2)/100,
-                                    interval == "Med" ~ 50/100),
-         value = as.numeric(value),
-         output_type = "quantile") %>%
-  arrange(horizon, output_type_id) %>%
-  select(horizon, origin_date, location_id, target, model, output_type_id, value, output_type)
+           level = c(0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
 ```
 
@@ -122,10 +103,21 @@ We use the `hubValidations` package to check against the `tasks.json` file we cr
 ### Save in hubVerse Format
 
 ```{r save-sarima-output}
+
+# Transform to hubVerse format
+data_fc_sarima <- trans_forecastpkg_hv(fc_output = fc_sarima,
+                                     model_name = model_name,
+                                     target = target,
+                                     reference_date = reference_date,
+                                     horizon_time_steps = forecast_horizon_wks,
+                                     geo_ids = geo_ids)
+
+
 ## Save data file
 #' -- this will have validation build in for fluid workflow eventually.
 save_model_output(model_name = model_name,
-                  fc_output = data_fc_sarima)
+                  fc_output = data_fc_sarima,
+                  forecast_date)
 
 ```
 
@@ -143,44 +135,33 @@ model_name <- "AMPH-neuralnetwork"
 
 ```{r neuralnet-model}
 
-fit_nnet <- forecast::nnetar(target_data$value, lambda = "auto")
-
-fc_nnet <- forecast(fit_nnet,
-                    PI = TRUE,
-                    h = length(forecast_horizon_wks),
-                    level = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
-
-data_fc_nnet <- fc_nnet %>%
-  as.data.frame() %>%
-  mutate(horizon = forecast_horizon_wks,
-         origin_date = as.Date(target_data$time_value[length(target_data$time_value)]) + 7,
-         location_id = state_name,
-         target = target,
-         model = model_name,
-         output_type = "quantile") %>%
-  rename(`Med 50` = `Point Forecast`) %>%
-  pivot_longer(`Med 50`:`Hi 98`) %>%
-  separate(name, into = c("interval", "confidence")) %>%
-  mutate(output_type_id = case_when(interval == "Lo" ~ (50 - as.numeric(confidence)/2)/100,
-                                    interval == "Hi" ~ (50 + as.numeric(confidence)/2)/100,
-                                    interval == "Med" ~ 50/100),
-         value = as.numeric(value),
-         output_type = "quantile") %>%
-  arrange(horizon, output_type_id) %>%
-  select(horizon, origin_date, location_id, target, model, output_type_id, value, output_type)
+fc_nnet <- forecast::nnetar(target_data$value, 
+                            lambda = "auto") %>%
+  forecast(PI = TRUE,
+           h = length(forecast_horizon_wks),
+           level = c(0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
 ```
 
 ### Save in hubVerse Format
 
-```{r save-neuralnet-output}
+```{r save-nnet-output}
+
+# Transform to hubVerse format
+data_fc_nnet <- trans_forecastpkg_hv(fc_output = fc_nnet,
+                                     model_name = model_name,
+                                     target = target,
+                                     reference_date = reference_date,
+                                     horizon_time_steps = forecast_horizon_wks,
+                                     geo_ids = geo_ids)
+
 ## Save data file
 #' -- this will have validation build in for fluid workflow eventually.
 save_model_output(model_name = model_name,
-                  fc_output = data_fc_nnet)
+                  fc_output = data_fc_nnet,
+                  forecast_date)
 
 ```
-
 
 
 ## Autoregressive Forecaster (`epipredict` package)    
@@ -192,7 +173,7 @@ Here we use the `epipredict` package to fit an autoregressive model to the data.
 model_name <- "AMPH-epipredict-arx"
 ```
 
-```{r}
+```{r epipredict-arx-model}
 
 # Set up data for epipredict
 target_data_arx <- target_data %>%
@@ -212,9 +193,7 @@ arx_forecast <- lapply(
       args_list = arx_args_list(
         lags = list(c(0, 7, 14)),
         ahead = days_ahead,
-        quantile_levels = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35,
-                            0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
-                            0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99),
+        quantile_levels = c(0.01, 0.025, seq(.05, .95, .05), 0.975, 0.99),
         nonneg = TRUE
       )
     )
@@ -241,7 +220,7 @@ autoplot(
 
 ### Save in hubVerse Format
 
-```{r save-neuralnet-output}
+```{r save-arx-output}
 
 # Transform to hubVerse format
 data_fc_arx_epipred <- trans_epipredarx_hv(fc_output = arx_forecast,
@@ -269,7 +248,7 @@ model_name <- "AMPH-epipredict-climate"
 ```
 
 
-```{r}
+```{r epipredict-climate-model}
 # Set up data for epipredict
 target_data_clim <- target_data %>%
   tsibble::as_tsibble(index = time_value, key = c(geo_value)) %>%
@@ -308,7 +287,7 @@ autoplot(
 
 ### Save in hubVerse Format
 
-```{r save-neuralnet-output}
+```{r save-clim-output}
 
 # Transform to hubVerse format
 hub_forecast <- trans_epipredclim_hv(fc_output = climate_forecast,

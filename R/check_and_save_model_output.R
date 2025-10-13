@@ -19,8 +19,8 @@
 #' }
 #'
 save_model_output <- function(model_name = "AMPH-SARIMA",
-                                 fc_output,
-                                 forecast_date) {
+                              fc_output,
+                              forecast_date) {
 
   if (!is.character(model_name) || length(model_name) != 1) {
     stop("model_name must be a string.")
