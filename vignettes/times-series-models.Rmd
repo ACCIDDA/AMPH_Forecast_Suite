@@ -10,15 +10,39 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Set parameters
+
 ```{r set-params}
-
 state_name <- "Maryland"
-
+used_locations <- "md"
+forecast_date <- as.Date("2024-11-30")
 ```
 
+# Install packages
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Install CRAN deps first (safe if already installed)
+cran_pkgs <- c(
+  "remotes", "jsonlite", "tidyverse", "forecast", "epidatr", "gitcreds"
+)
+to_install <- setdiff(cran_pkgs, rownames(installed.packages()))
+if (length(to_install)) install.packages(to_install, dependencies = TRUE)
+
+library(tidyverse)
+library(forecast)
+library(jsonlite)
+library(ggplot2)
+library(epidatr)
+library(gitcreds)
+
+gitcreds_set()
+
+# Follow instructions about opening `.Renviron` file
+# Use 'e4cd912a31fb4' as the API key (without quotes)
+save_api_key()
+get_api_key()
 
 # Install AMPHForecastSuite from GitHub if missing (set AMPH_SUITE_GH to "org/repo")
 # Example: Sys.setenv(AMPH_SUITE_GH = "JH-AMPH/AMPHForecastSuite")
@@ -34,15 +58,14 @@ if (!requireNamespace("AMPHForecastSuite", quietly = TRUE)) {
   }
 }
 
-# Load packages
-library(AMPHForecastSuite)
-library(dplyr)
-library(tidyr)
-library(tibble)
-library(forecast)
-library(jsonlite)
-library(readr)
+remotes::install_github("cmu-delphi/epipredict", upgrade = "never", dependencies = TRUE)
+remotes::install_github("cmu-delphi/epiprocess", upgrade = "never", dependencies = TRUE)
 
+
+# Load packages
+# library(AMPHForecastSuite)
+library(epipredict)
+library(epiprocess)
 ```
 
 
@@ -105,7 +128,6 @@ message("Using dir_path: ", dir_path)
 
 ```
 
-
 # Choose forecast round (reference date)
 
 ```{r choose-round}
@@ -124,7 +146,7 @@ dates_archive <- dates_archive[dates_archive <= Sys.Date()]
 # curr_origin_date <- max(dates_archive, na.rm = TRUE)
 
 # Option 2: explicit date (must be one of the submission dates)
-curr_origin_date <- as.Date("2025-01-18")
+curr_origin_date <- forecast_date - 7
 
 # Option 3: pick by index (e.g., 12th date)
 # curr_origin_date <- dates_archive[12]
@@ -135,7 +157,7 @@ if (!curr_origin_date %in% dates_archive) {
 
 ```
 
-# Load target (observed) data
+# Load target (observed) data (NO LONGER NEEDED)
 
 ```{r read-target}
 
@@ -155,10 +177,12 @@ target_path <- file.path(
   target_filename
 )
 
-target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) 
+target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) %>%
+  filter(week_ending_date < curr_origin_date)
 
 ```
 
+# Modify data frame (NO LONGER NEEDED)
 
 ```{r data-prep}
 
@@ -169,60 +193,84 @@ data_fit <- target_data_all %>%
   dplyr::rename(location = location_name,
                 count = value,
                 date = week_ending_date)
-
 ```
 
+# Pull NHSN hospitalization data
+
+```{r}
+epidata <- pub_covidcast(
+  source = "nhsn",
+  signals = "*",
+  geo_type = "state",
+  time_type = "week",
+  geo_values = used_locations,
+  issues = "*"
+) %>%
+  mutate(origin_date = as.Date(time_value) - 1,
+         issue_date = as.Date(issue) - 1)
+
+epidata_filter <- epidata %>%
+  filter(signal == "confirmed_admissions_flu_ew",
+         geo_value %in% used_locations,
+         issue_date == forecast_date,
+         time_value > "2022-09-01") %>%
+  select(geo_value, origin_date, value) %>%
+  drop_na(value) %>%
+  as_epi_df(time_value = origin_date)
+
+ggplot(epidata_filter, aes(x = time_value, y = value)) +
+  geom_line() +
+  facet_wrap(~geo_value, scales = "free_y")
+```
 
 # SARIMA (forecast package)
 
 ```{r sarima-model}
+fit_sarima <- auto.arima(epidata_filter$value, seasonal = T, lambda = "auto")
 
-library(forecast)
+fc_sarima <- fit_sarima %>%
+  forecast(h = 4,
+           level = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
-fit <- auto.arima(data_fit$count, seasonal = T)
-fc <- fit %>% forecast(h = 4)
-
-data_fc <- data.frame(horizon = 1:4) %>%
-  mutate(
-    origin_date = as.Date(data_fit$date[length(data_fit$date)]) + 7,
-    location_id = state_name,
-    target = "inc hosp",
-    `0.025` = fc$lower[, 2],
-    `0.1` = fc$lower[, 1],
-    `0.5` = fc$mean,
-    `0.9` = fc$upper[, 1],
-    `0.975` = fc$upper[, 2],
-    model = "NEC_SARIMA",
-    output_type = "quantile"
-  )
-
-data_fc <- as_tibble(data_fc)
-data_long <- gather(data_fc, key = output_type_id, value = value, `0.025`:`0.975`)
-data_long$value <- as.numeric(data_long$value)  
-data_long$value[which(data_long$value < 0)] <- 0
-
+data_fc_sarima <- fc_sarima %>%
+  as.data.frame() %>%
+  mutate(horizon = 0:3,
+         origin_date = as.Date(epidata_filter$time_value[length(epidata_filter$time_value)]) + 7,
+         location_id = state_name,
+         target = "wk inc flu hosp",
+    model = "AMPH-SARIMA",
+    output_type = "quantile") %>%
+  rename(`Med 50` = `Point Forecast`) %>%
+  pivot_longer(`Med 50`:`Hi 98`) %>%
+  separate(name, into = c("interval", "confidence")) %>%
+  mutate(output_type_id = case_when(interval == "Lo" ~ (50 - as.numeric(confidence)/2)/100,
+                              interval == "Hi" ~ (50 + as.numeric(confidence)/2)/100,
+                              interval == "Med" ~ 50/100),
+         value = as.numeric(value),
+         output_type = "quantile") %>%
+  arrange(horizon, output_type_id) %>%
+  select(horizon, origin_date, location_id, target, model, output_type_id, value, output_type)
 ```
 
 
 ```{r save-sarima-output}
 
 ## Write data file
-reference_date <- data_long$origin_date[1]
-output_path <- file.path(dir_path, "model-output")
-new_folder <- file.path(output_path, "AMPH-SARIMA")  
+output_path_sarima <- file.path(dir_path, "model-output")
+new_folder_sarima <- file.path(output_path_sarima, "AMPH-SARIMA")  
 
 # Create the folder if it doesn't exist
-if (!dir.exists(new_folder)) {
-  dir.create(new_folder, recursive = TRUE)
-  message("Created folder: ", new_folder)
+if (!dir.exists(new_folder_sarima)) {
+  dir.create(new_folder_sarima, recursive = TRUE)
+  message("Created folder: ", new_folder_sarima)
 } else {
-  message("Folder already exists: ", new_folder)
+  message("Folder already exists: ", new_folder_sarima)
 }
 
 
-write.csv(data_long, 
-          file.path(new_folder, 
-                    sprintf("%s-AMPH-SARIMA.csv", reference_date)))
+write_csv(data_fc_sarima, 
+          file.path(new_folder_sarima, 
+                    sprintf("%s-AMPH-SARIMA.csv", forecast_date)))
                     
 
 ```
@@ -233,51 +281,179 @@ write.csv(data_long,
 
 ```{r neuralnet-model}
 
-fit <- nnetar(data_fit$count)
+fit_nnet <- nnetar(epidata_filter$value, lambda = "auto")
 
-fc <- forecast(fit,
+fc_nnet <- forecast(fit_nnet,
                PI = TRUE,
-               h = 4)
+               h = 4,
+               level = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
-data_fc <- data.frame(horizon = 1:4) %>%
-  mutate(
-    origin_date = as.Date(data_fit$date[length(data_fit$date)]) + 7,
-    location_id = state_name,
-    target = "inc hosp",
-    `0.025` = fc$lower[, 2],
-    `0.1` = fc$lower[, 1],
-    `0.5` = fc$mean,
-    `0.9` = fc$upper[, 1],
-    `0.975` = fc$upper[, 2],
+data_fc_nnet <- fc_nnet %>%
+  as.data.frame() %>%
+  mutate(horizon = 0:3,
+         origin_date = as.Date(epidata_filter$time_value[length(epidata_filter$time_value)]) + 7,
+         location_id = state_name,
+         target = "wk inc flu hosp",
     model = "AMPH-neuralnetwork",
-    output_type = "quantile"
-  )
-
-data_long <- gather(data_fc, key = output_type_id, value = value, `0.025`:`0.975`)
-
-
+    output_type = "quantile") %>%
+  rename(`Med 50` = `Point Forecast`) %>%
+  pivot_longer(`Med 50`:`Hi 98`) %>%
+  separate(name, into = c("interval", "confidence")) %>%
+  mutate(output_type_id = case_when(interval == "Lo" ~ (50 - as.numeric(confidence)/2)/100,
+                              interval == "Hi" ~ (50 + as.numeric(confidence)/2)/100,
+                              interval == "Med" ~ 50/100),
+         value = as.numeric(value),
+         output_type = "quantile") %>%
+  arrange(horizon, output_type_id) %>%
+  select(horizon, origin_date, location_id, target, model, output_type_id, value, output_type)
 ```
 
 
 ```{r save-neuralnet-output}
 
 ## Write data file
-reference_date <- data_long$origin_date[1]
-output_path <- file.path(dir_path, "model-output")
-new_folder <- file.path(output_path, "AMPH-neuralnetwork")  
+output_path_nnet <- file.path(dir_path, "model-output")
+new_folder_nnet <- file.path(output_path_nnet, "AMPH-neuralnetwork")  
 
 # Create the folder if it doesn't exist
-if (!dir.exists(new_folder)) {
-  dir.create(new_folder, recursive = TRUE)
-  message("Created folder: ", new_folder)
+if (!dir.exists(new_folder_nnet)) {
+  dir.create(new_folder_nnet, recursive = TRUE)
+  message("Created folder: ", new_folder_nnet)
 } else {
-  message("Folder already exists: ", new_folder)
+  message("Folder already exists: ", new_folder_nnet)
 }
 
 
-write.csv(data_long, 
-          file.path(new_folder, 
-                    sprintf("%s-AMPH-neuralnetwork.csv", reference_date)))
+write_csv(data_fc_nnet, 
+          file.path(new_folder_nnet, 
+                    sprintf("%s-AMPH-neuralnetwork.csv", forecast_date)))
                     
 
 ```
+
+# epiforecast autoregressive forecaster
+
+```{r}
+arx_forecast <- lapply(
+  seq(7, 28, 7),
+  \(days_ahead) {
+    arx_forecaster(
+      epidata_filter %>% filter(time_value < forecast_date),
+      outcome = "value",
+      trainer = linear_reg(),
+      predictors = "value",
+      args_list = arx_args_list(
+        lags = list(c(0, 7, 14)),
+        ahead = days_ahead,
+        quantile_levels = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35,
+                            0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
+                            0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99),
+        nonneg = TRUE
+      )
+    )
+  }
+)
+# pull out the workflow and the predictions to be able to
+# effectively use autoplot
+arx_forecaster_workflow <- arx_forecast[[1]]$epi_workflow
+arx_forecaster_results <- arx_forecast %>%
+  purrr::map(~ `$`(., "predictions")) %>%
+  list_rbind() %>%
+  mutate(horizon = 0:3,
+         location_id = state_name,
+         model = "AMPH-epipredict-arx",
+         target = "wk inc flu hosp")
+autoplot(
+  object = arx_forecaster_workflow,
+  predictions = arx_forecaster_results,
+  observed_response = epidata_filter %>%
+    filter(geo_value %in% used_locations, time_value > "2022-09-01")) +
+  geom_vline(aes(xintercept = forecast_date))
+```
+
+# Output autoregressive forecaster results
+
+```{r}
+arx_forecaster_results_long <- arx_forecaster_results %>%
+  select(-.pred) %>%
+  pivot_quantiles_longer(.pred_distn) %>%
+  select(horizon, forecast_date, location_id, target, model, quantile = .pred_distn_quantile_level, value = .pred_distn_value) %>%
+  rename(origin_date = forecast_date,
+         output_type_id = quantile) %>%
+  mutate(output_type = "quantile")
+
+output_path_arx <- file.path(dir_path, "model-output")
+new_folder_arx <- file.path(output_path_arx, "AMPH-epipredict-arx") 
+
+# Create the folder if it doesn't exist
+if (!dir.exists(new_folder_arx)) {
+  dir.create(new_folder_arx, recursive = TRUE)
+  message("Created folder: ", new_folder_arx)
+} else {
+  message("Folder already exists: ", new_folder_arx)
+}
+
+write_csv(arx_forecaster_results_long, 
+          file.path(new_folder_arx, 
+                    sprintf("%s-AMPH-epipredict-arx.csv", forecast_date)))
+```
+
+# epiforecast climatological forecaster
+
+```{r}
+climate_forecast <- climatological_forecaster(
+  epidata_filter %>% filter(time_value < forecast_date),
+  outcome = "value",
+  args_list = climate_args_list(
+    forecast_horizon = 0:3,
+    time_type = "week",
+    quantile_levels = c(0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35,
+                        0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
+                        0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99),
+    center_method = "mean",
+    quantile_by_key = "geo_value",
+    forecast_date = forecast_date,
+    nonneg = TRUE
+  )
+)
+climate_forecast_workflow <- climate_forecast$epi_workflow
+climate_forecast_results <- climate_forecast$predictions %>%
+  mutate(horizon = 0:3,
+         location_id = state_name,
+         model = "AMPH-epipredict-climate",
+         target = "wk inc flu hosp")
+autoplot(
+  object = climate_forecast_workflow,
+  predictions = climate_forecast_results,
+  observed_response = epidata_filter %>%
+    filter(geo_value %in% used_locations, time_value > "2022-09-01")) +
+  geom_vline(aes(xintercept = forecast_date))
+```
+
+# Output climatological forecaster results
+
+```{r}
+climate_forecast_results_long <- climate_forecast_results %>%
+  select(-.pred) %>%
+  pivot_quantiles_longer(.pred_distn) %>%
+  select(horizon, forecast_date, location_id, target, model, quantile = .pred_distn_quantile_level, value = .pred_distn_value) %>%
+  rename(origin_date = forecast_date,
+         output_type_id = quantile) %>%
+  mutate(output_type = "quantile")
+
+output_path_climate <- file.path(dir_path, "model-output")
+new_folder_climate <- file.path(output_path_climate, "AMPH-epipredict-climate")  
+
+# Create the folder if it doesn't exist
+if (!dir.exists(new_folder_climate)) {
+  dir.create(new_folder_climate, recursive = TRUE)
+  message("Created folder: ", new_folder_climate)
+} else {
+  message("Folder already exists: ", new_folder_climate)
+}
+
+write_csv(climate_forecast_results_long, 
+          file.path(new_folder_climate, 
+                    sprintf("%s-AMPH-epipredict-climate.csv", forecast_date)))
+```
+

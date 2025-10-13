@@ -10,10 +10,14 @@ editor_options:
   chunk_output_type: console
 ---
 
+# 0) Set parameters
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
 
+state_name <- "Maryland"
+used_locations <- "md"
+forecast_date <- as.Date("2024-11-30")
 ```
 
 # 1) Setup
@@ -118,7 +122,7 @@ dates_archive <- dates_archive[dates_archive <= Sys.Date()]
 # curr_origin_date <- max(dates_archive, na.rm = TRUE)
 
 # Option 2: explicit date (must be one of the submission dates)
-curr_origin_date <- as.Date("2025-01-18")
+curr_origin_date <- forecast_date
 
 # Option 3: pick by index (e.g., 12th date)
 # curr_origin_date <- dates_archive[12]
@@ -179,11 +183,10 @@ projection_data_all <- file_paths %>%
 
 prep_proj_data <- projection_data_all %>%
   dplyr::mutate(
-    reference_date  = dplyr::coalesce(reference_date, origin_date),
+    reference_date  = curr_origin_date,
     target_end_date = dplyr::coalesce(target_end_date, reference_date + 7 * as.integer(horizon))
   ) %>%
   dplyr::select(-model,-origin_date)
-
 
 # Convert to hubverse model_out_tbl format
 projection_data_tbl <- hubUtils::as_model_out_tbl(prep_proj_data) %>%
@@ -191,7 +194,10 @@ projection_data_tbl <- hubUtils::as_model_out_tbl(prep_proj_data) %>%
     "FluSight-baseline",
     "MOBS-GLEAM_FLUH",
     "AMPH-SARIMA",
-    "AMPH-neuralnetwork"
+    "AMPH-neuralnetwork",
+    "AMPH-epipredict-arx",
+    "AMPH-epipredict-climate",
+    "FluSight-ensemble"
   ))
   
 
@@ -217,7 +223,7 @@ dplyr::distinct(projection_data_tbl, model_id)
 
 
 
-# 5) Load target (observed) data
+# 5) Load target (observed) data (NO LONGER NEEDED)
 
 ```{r read-target}
 
@@ -242,14 +248,12 @@ target_data_all <- readr::read_csv(target_path, show_col_types = FALSE)
 
 ```
 
-
-
 # 6) Pick location, start date, and uncertainty bands
 
 ```{r params}
 # Location can be "US" or a full state name (must match location_name in target_data)
 loc <- "Maryland"
-start_date <- as.Date("2024-11-23")
+start_date <- as.Date("2024-09-01")
 # Middle 50% interval:
 uncertainty <- c(0.1, 0.9)
 uncertainty
@@ -266,15 +270,18 @@ projection_data <- projection_data_tbl2 %>%
 
 # Keep only the chosen forecast round
 round_dat <- projection_data %>%
-  dplyr::mutate(target = "wk inc flu hosp") %>%
-  dplyr::filter(reference_date == as.Date(curr_origin_date),
+  dplyr::filter(target == "wk inc flu hosp",
                 output_type == "quantile",
                 horizon >= 0) %>%
   dplyr::collect()
 
 # Generate a simple (equal-weight) ensemble across contributing models
-round_ens <- hubEnsembles::simple_ensemble(round_dat %>%
-                                             dplyr::filter(model_id != "FluSight-baseline"))
+round_ens <- hubEnsembles::simple_ensemble(
+  round_dat %>%
+    dplyr::filter(!(model_id %in% c("FluSight-baseline",
+                                    "FluSight-ensemble",
+                                    "AMPH-epipredict-climate")))) %>%
+  mutate(model_id = "AMPH-ensemble")
 
 # Combine ensemble with individual models for plotting
 plot_df <- dplyr::bind_rows(round_dat, round_ens)
@@ -296,11 +303,10 @@ proj_data <- hubUtils::as_model_out_tbl(plot_df) %>%
 
 
 # Observed data for the same location and time window
-target_data <- target_data_all %>%
-  dplyr::filter(.data$location_name == loc, 
-                .data$week_ending_date > start_date) %>%
+target_data <- epidata_filter %>%
+  dplyr::filter(time_value > start_date) %>%
   dplyr::rename(observation = value,
-                date = week_ending_date)
+                date = time_value)
 
 head(proj_data)
 head(target_data)
@@ -321,7 +327,7 @@ hubVis::plot_step_ahead_model_output(
   use_median_as_point = TRUE,
   show_legend = TRUE,
   intervals = 0.8,        
-  ens_name = "hub-ensemble",
+  ens_name = "AMPH-ensemble",
   ens_color = "black"
 )
 
@@ -387,7 +393,14 @@ ggplot() +
   geom_point(
     data = target_data,
     aes(x = date, y = observation),
-    size = 1.2, alpha = 0.85, inherit.aes = FALSE
+    size = 1.2, alpha = 0.85, inherit.aes = FALSE,
+    color = "grey50"
+  ) +
+  geom_line(
+    data = target_data,
+    aes(x = date, y = observation),
+    alpha = 0.85, inherit.aes = FALSE,
+    color = "grey50"
   ) +
   scale_color_manual(values = color_vals, name = "Model") +
   scale_fill_manual(values  = fill_vals,  name = "Model") +
@@ -401,19 +414,14 @@ ggplot() +
 # 10) Score forecasts (WIS, coverage)
 
 ```{r scoring-prep}
-
-score_date <- format(curr_origin_date + 28, "%Y-%m-%d")
-scoretarget_filename <- paste0(score_date, "_flu_target_hospital_admissions_data.csv")
-
-score_path <- file.path(
-  dir_path,
-  "weekly-summaries",
-  score_date,
-  scoretarget_filename
-)
-
-scoring_target_data <- readr::read_csv(score_path, show_col_types = FALSE)
-
+scoring_target_data <- epidata %>%
+  filter(signal == "confirmed_admissions_flu_ew",
+         geo_value %in% used_locations,
+         issue_date == curr_origin_date + 28,
+         time_value > "2022-09-01") %>%
+  select(geo_value, origin_date, value) %>%
+  drop_na(value) %>%
+  as_epi_df(time_value = origin_date)
 ```
 
 ```{r scoring}
@@ -422,8 +430,11 @@ scoring_target_data <- readr::read_csv(score_path, show_col_types = FALSE)
 
 scoring_df <- dplyr::left_join(
   proj_data,
-  scoring_target_data %>% dplyr::rename(target_date = week_ending_date,
-                                        observation = value),
+  scoring_target_data %>%
+    dplyr::rename(observation = value,
+                target_date = time_value) %>%
+    mutate(location_name = "Maryland") %>%
+    select(-geo_value),
   by = c("target_date", "location_name"),
   relationship = "many-to-one"
 ) %>%
@@ -432,8 +443,7 @@ scoring_df <- dplyr::left_join(
     predicted = value,
     observed = observation,
     quantile_level = output_type_id
-  ) %>%
-  dplyr::filter(quantile_level %in% c(0.025, 0.1, 0.5, 0.9, 0.975))
+  )
 
 # Convert to a scoringutils forecast object
 forecast <- scoringutils::as_forecast_quantile(
@@ -442,7 +452,7 @@ forecast <- scoringutils::as_forecast_quantile(
   predicted      = "predicted",
   quantile_level = "quantile_level",
   # be explicit so extra cols don't confuse the unit of a single forecast
-  forecast_unit  = c("model", "location", "target_date")
+  forecast_unit  = c("model", "location_name", "target_date")
 )
 
 # Score (WIS, coverage, etc.)
