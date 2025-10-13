@@ -11,6 +11,7 @@
 #'
 #' @return A tsibble object
 #' @export
+#'
 #' @importFrom dplyr %>% select mutate rename
 #' @importFrom lubridate as_date
 #'
@@ -29,19 +30,19 @@ convert_hub_to_tsibble <- function(hub_data,
                                   location_col = "location",
                                   index = "date",
                                   key = "location") {
-  
+
   if (!requireNamespace("tsibble", quietly = TRUE)) {
     stop("Package 'tsibble' is required. Please install it first.")
   }
-  
+
   # Ensure date column is Date type
   hub_data[[date_col]] <- lubridate::as_date(hub_data[[date_col]])
-  
+
   # Convert to tsibble
   result <- tsibble::as_tsibble(hub_data,
                                 index = date_col,
                                 key = location_col)
-  
+
   return(result)
 }
 
@@ -93,24 +94,24 @@ convert_hub_to_fable <- function(hub_data, ...) {
 convert_fable_to_hub <- function(fable_forecast,
                                 location = NULL,
                                 target = "inc") {
-  
+
   if (!requireNamespace("fable", quietly = TRUE)) {
     stop("Package 'fable' is required. Please install it first.")
   }
-  
+
   # Extract forecast data
   # This is a simplified version - actual implementation depends on fable output structure
   result <- as.data.frame(fable_forecast)
-  
+
   # Add hub-specific columns if they don't exist
   if (!is.null(location) && !"location" %in% names(result)) {
     result$location <- location
   }
-  
+
   if (!"target" %in% names(result)) {
     result$target <- target
   }
-  
+
   return(result)
 }
 
@@ -131,9 +132,9 @@ convert_fable_to_hub <- function(fable_forecast,
 #' # hub_data <- convert_tsibble_to_hub(ts_data)
 #' }
 convert_tsibble_to_hub <- function(tsibble_data) {
-  
+
   # Convert to regular data frame
   result <- as.data.frame(tsibble_data)
-  
+
   return(result)
 }

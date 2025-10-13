@@ -26,7 +26,7 @@ First, ensure you have R (version 4.0 or higher) and RStudio installed.
 # Check R version
 R.Version()$version.string
 # Check RStudio version
-RStudio.Version()$version
+# RStudio.Version()$version
 ```
 
 Next, set your git credentials, if you have not already done this.

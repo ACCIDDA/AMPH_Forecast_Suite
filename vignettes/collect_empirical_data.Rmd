@@ -14,10 +14,9 @@ editor_options:
 
 ```{r set-params}
 state_name <- "Maryland"
-geo_values <- "md"
+geo_ids <- "md"
 forecast_disease <- "influenza"
 forecast_date = "2025-10-12"
-
 ```
 
 # Install packages
@@ -57,9 +56,9 @@ epidatr::get_api_key()
 
 ```{r}
 
-epidata <- get_nhsn_data(
+target_data <- get_nhsn_data(
   disease = forecast_disease, #"influenza"  or "rsv" or "covid"
-  geo_values = geo_values,
+  geo_values = geo_ids,
   forecast_date = forecast_date,
   save_data = TRUE
 )
@@ -68,43 +67,40 @@ epidata <- get_nhsn_data(
 
 # Or pull directly with epidatr
 
-```{r}
+Note: To pull data directly that pertains to a previous forecast date, you need to filter by issue date. The code below is not set up to do that, so it will pull the most recent data. To pull data as of a previous forecast date, use the `get_nhsn_data()` function above.
 
-  # Map disease names to NHSN signal names
-  # Based on epidatr NHSN signals for respiratory diseases
-  signal_map <- list(
-    "influenza" = "confirmed_admissions_flu_ew",
-    "covid" = "confirmed_admissions_covid_ew",
-    "rsv" = "confirmed_admissions_rsv_ew"
-  )
-  signal <- signal_map[[disease]]
+```{r, eval = FALSE}
 
-  # Call epidatr to get the data
-  epidata <- epidatr::pub_covidcast(
-    source = "nhsn",
-    signals = "*",
-    geo_type = "state",
-    time_type = "week",
-    geo_values = tolower(geo_values),
-    issues = "*"
-  ) %>%
-    mutate(origin_date = as.Date(time_value) - 1,
-           issue_date = as.Date(issue) - 1)
+# Map disease names to NHSN signal names
+# Based on epidatr NHSN signals for respiratory diseases
+signal_map <- list(
+  "influenza" = "confirmed_admissions_flu_ew",
+  "covid" = "confirmed_admissions_covid_ew",
+  "rsv" = "confirmed_admissions_rsv_ew"
+)
+signal <- signal_map[[forecast_disease]]
 
-  epidata_filter <- epidata %>%
-    filter(signal == signal,
-           geo_value %in% used_locations,
-           time_value >= lubridate::as_date("2020-09-01"),
-           time_value < lubridate::as_date(forecast_date)) %>%
-    mutate(disease = disease, signal = signal) %>%
-    select(geo_value, source, disease, signal, time_value, value)
+# Call epidatr to get the data
+target_data <- epidatr::pub_covidcast(
+  source = "nhsn",
+  signals = signal,
+  geo_type = "state",
+  time_type = "week",
+  geo_values = tolower(geo_ids)
+)
+
+target_data <- target_data %>%
+  dplyr::filter(time_value >= lubridate::as_date("2020-09-01"),
+                time_value < lubridate::as_date(forecast_date)) %>%
+  dplyr::mutate(disease = forecast_disease, signal = signal) %>%
+  dplyr::select(geo_value, source, disease, signal, issue_date = issue, time_value, value)
 
 ```
 
 ## Check the data 
 
 ```{r}
-ggplot(epidata_filter, aes(x = time_value, y = value)) +
+ggplot(target_data, aes(x = time_value, y = value)) +
   geom_line() +
   facet_wrap(~geo_value, scales = "free_y")
 ```
@@ -112,150 +108,152 @@ ggplot(epidata_filter, aes(x = time_value, y = value)) +
 ## Save it
 
 ```{r}
-write_csv(epidata_filter, file = "target-data/target-hospital-admissions.csv")
+write_csv(target_data, file = file.path("target-data", paste0("target-hospital-admissions-", forecast_date, ".csv")))
+
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- # Clone or pull updates from the FluSight data repo -->
-
-<!-- ```{r clone-repo} -->
-
-<!-- # Ensure Git is available -->
-<!-- has_git <- tryCatch( -->
-<!--   system2("git", "--version", stdout = TRUE, stderr = TRUE), -->
-<!--   error = function(e) NA -->
-<!-- ) -->
-<!-- if (any(is.na(has_git))) stop("Git does not appear to be installed or on PATH.") -->
-
-<!-- repo_dir <- "FluSight-forecast-hub" -->
-
-<!-- # Clone into working directory if not present -->
-<!-- if (!dir.exists(repo_dir)) { -->
-<!--   message("Cloning repository...") -->
-<!--   status <- system2("git", c("clone", "https://github.com/cdcepi/FluSight-forecast-hub.git"), -->
-<!--                     stdout = TRUE, stderr = TRUE) -->
-<!--   cat(paste(status, collapse = "\n"), "\n") -->
-<!-- } else { -->
-<!--   message("Repository exists. Pulling latest changes...") -->
-
-<!--   # Check it's actually a git repo -->
-<!--   is_repo <- tryCatch( -->
-<!--     system2("git", c("-C", repo_dir, "rev-parse", "--is-inside-work-tree"), -->
-<!--             stdout = TRUE, stderr = TRUE), -->
-<!--     error = function(e) "false" -->
-<!--   ) -->
-
-<!--   if (identical(trimws(is_repo), "true")) { -->
-<!--     # Warn if there are local changes -->
-<!--     dirty <- trimws(paste(system2("git", c("-C", repo_dir, "status", "--porcelain"), -->
-<!--                                   stdout = TRUE), collapse = "\n")) -->
-<!--     if (nchar(dirty) > 0) { -->
-<!--       message("⚠️ Local changes detected in ", repo_dir,  -->
-<!--               ". Pulling with --ff-only (won't overwrite local work).") -->
-<!--     } -->
-
-<!--     # Fetch and pull (fast-forward only) -->
-<!--     fetch_out <- system2("git", c("-C", repo_dir, "fetch", "--prune"), -->
-<!--                          stdout = TRUE, stderr = TRUE) -->
-<!--     pull_out  <- system2("git", c("-C", repo_dir, "pull", "--ff-only", "--quiet"), -->
-<!--                          stdout = TRUE, stderr = TRUE) -->
-
-<!--     # Show any messages from Git -->
-<!--     if (length(fetch_out)) cat(paste(fetch_out, collapse = "\n"), "\n") -->
-<!--     if (length(pull_out))  cat(paste(pull_out,  collapse = "\n"), "\n") -->
-<!--     message("Pull complete.") -->
-<!--   } else { -->
-<!--     stop(sprintf("Path '%s' exists but is not a Git repository.", repo_dir)) -->
-<!--   } -->
-<!-- } -->
-
-<!-- # Normalize path for downstream code -->
-<!-- dir_path <- normalizePath(repo_dir) -->
-<!-- message("Using dir_path: ", dir_path) -->
-
-<!-- ``` -->
-
-<!-- # Choose forecast round (reference date) -->
-
-<!-- ```{r choose-round} -->
-
-<!-- # Read submission (reference) dates from hub-config/tasks.json -->
-<!-- tasks_path <- file.path(dir_path, "hub-config", "tasks.json") -->
-<!-- tasks <- jsonlite::read_json(tasks_path) -->
-
-<!-- # Extract reference dates from the first round / first model task -->
-<!-- dates_archive <- unlist(tasks$rounds[[1]]$model_tasks[[1]]$task_ids$reference_date$optional) -->
-<!-- dates_archive <- as.Date(dates_archive) -->
-<!-- dates_archive <- dates_archive[dates_archive <= Sys.Date()] -->
-
-<!-- # ---- Set reference date of interest ---- -->
-<!-- # Option 1: most recent submission date -->
-<!-- # curr_origin_date <- max(dates_archive, na.rm = TRUE) -->
-
-<!-- # Option 2: explicit date (must be one of the submission dates) -->
-<!-- curr_origin_date <- forecast_date - 7 -->
-
-<!-- # Option 3: pick by index (e.g., 12th date) -->
-<!-- # curr_origin_date <- dates_archive[12] -->
-
-<!-- if (!curr_origin_date %in% dates_archive) { -->
-<!--   stop("Chosen curr_origin_date is not a valid submission date in the Hub.") -->
-<!-- } -->
-
-<!-- ``` -->
-
-<!-- # Load target (observed) data (NO LONGER NEEDED) -->
-
-<!-- ```{r read-target} -->
-
-<!-- # # If loading most recent data:  -->
-<!-- # target_path <- file.path(dir_path, "target-data", "time-series.csv") -->
-<!-- # target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) -->
-
-
-<!-- # If loading from a specific date:  -->
-<!-- date_str <- format(as.Date(curr_origin_date), "%Y-%m-%d") -->
-<!-- target_filename <- paste0(date_str, "_flu_target_hospital_admissions_data.csv") -->
-
-<!-- target_path <- file.path( -->
-<!--   dir_path, -->
-<!--   "weekly-summaries", -->
-<!--   date_str, -->
-<!--   target_filename -->
-<!-- ) -->
-
-<!-- target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) %>% -->
-<!--   filter(week_ending_date < curr_origin_date) -->
-
-<!-- ``` -->
-
-<!-- # Modify data frame (NO LONGER NEEDED) -->
-
-<!-- ```{r data-prep} -->
-
-<!-- data_fit <- target_data_all %>% -->
-<!--   dplyr::filter(location_name == state_name, -->
-<!--                 week_ending_date > as.Date("2022-08-01")) %>% -->
-<!--   dplyr::select(-location) %>% -->
-<!--   dplyr::rename(location = location_name, -->
-<!--                 count = value, -->
-<!--                 date = week_ending_date) -->
-<!-- ``` -->
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <!-- # Clone or pull updates from the FluSight data repo -->
+          
+          <!-- ```{r clone-repo} -->
+          
+          <!-- # Ensure Git is available -->
+          <!-- has_git <- tryCatch( -->
+          <!--   system2("git", "--version", stdout = TRUE, stderr = TRUE), -->
+          <!--   error = function(e) NA -->
+          <!-- ) -->
+          <!-- if (any(is.na(has_git))) stop("Git does not appear to be installed or on PATH.") -->
+          
+          <!-- repo_dir <- "FluSight-forecast-hub" -->
+          
+          <!-- # Clone into working directory if not present -->
+          <!-- if (!dir.exists(repo_dir)) { -->
+          <!--   message("Cloning repository...") -->
+          <!--   status <- system2("git", c("clone", "https://github.com/cdcepi/FluSight-forecast-hub.git"), -->
+          <!--                     stdout = TRUE, stderr = TRUE) -->
+          <!--   cat(paste(status, collapse = "\n"), "\n") -->
+          <!-- } else { -->
+          <!--   message("Repository exists. Pulling latest changes...") -->
+          
+          <!--   # Check it's actually a git repo -->
+          <!--   is_repo <- tryCatch( -->
+          <!--     system2("git", c("-C", repo_dir, "rev-parse", "--is-inside-work-tree"), -->
+          <!--             stdout = TRUE, stderr = TRUE), -->
+          <!--     error = function(e) "false" -->
+          <!--   ) -->
+          
+          <!--   if (identical(trimws(is_repo), "true")) { -->
+          <!--     # Warn if there are local changes -->
+          <!--     dirty <- trimws(paste(system2("git", c("-C", repo_dir, "status", "--porcelain"), -->
+          <!--                                   stdout = TRUE), collapse = "\n")) -->
+          <!--     if (nchar(dirty) > 0) { -->
+          <!--       message("⚠️ Local changes detected in ", repo_dir,  -->
+          <!--               ". Pulling with --ff-only (won't overwrite local work).") -->
+          <!--     } -->
+          
+          <!--     # Fetch and pull (fast-forward only) -->
+          <!--     fetch_out <- system2("git", c("-C", repo_dir, "fetch", "--prune"), -->
+          <!--                          stdout = TRUE, stderr = TRUE) -->
+          <!--     pull_out  <- system2("git", c("-C", repo_dir, "pull", "--ff-only", "--quiet"), -->
+          <!--                          stdout = TRUE, stderr = TRUE) -->
+          
+          <!--     # Show any messages from Git -->
+          <!--     if (length(fetch_out)) cat(paste(fetch_out, collapse = "\n"), "\n") -->
+          <!--     if (length(pull_out))  cat(paste(pull_out,  collapse = "\n"), "\n") -->
+          <!--     message("Pull complete.") -->
+          <!--   } else { -->
+          <!--     stop(sprintf("Path '%s' exists but is not a Git repository.", repo_dir)) -->
+          <!--   } -->
+          <!-- } -->
+          
+          <!-- # Normalize path for downstream code -->
+          <!-- dir_path <- normalizePath(repo_dir) -->
+          <!-- message("Using dir_path: ", dir_path) -->
+          
+          <!-- ``` -->
+          
+          <!-- # Choose forecast round (reference date) -->
+          
+          <!-- ```{r choose-round} -->
+          
+          <!-- # Read submission (reference) dates from hub-config/tasks.json -->
+          <!-- tasks_path <- file.path(dir_path, "hub-config", "tasks.json") -->
+          <!-- tasks <- jsonlite::read_json(tasks_path) -->
+          
+          <!-- # Extract reference dates from the first round / first model task -->
+          <!-- dates_archive <- unlist(tasks$rounds[[1]]$model_tasks[[1]]$task_ids$reference_date$optional) -->
+          <!-- dates_archive <- as.Date(dates_archive) -->
+          <!-- dates_archive <- dates_archive[dates_archive <= Sys.Date()] -->
+          
+          <!-- # ---- Set reference date of interest ---- -->
+          <!-- # Option 1: most recent submission date -->
+          <!-- # curr_origin_date <- max(dates_archive, na.rm = TRUE) -->
+          
+          <!-- # Option 2: explicit date (must be one of the submission dates) -->
+          <!-- curr_origin_date <- forecast_date - 7 -->
+          
+          <!-- # Option 3: pick by index (e.g., 12th date) -->
+          <!-- # curr_origin_date <- dates_archive[12] -->
+          
+          <!-- if (!curr_origin_date %in% dates_archive) { -->
+          <!--   stop("Chosen curr_origin_date is not a valid submission date in the Hub.") -->
+          <!-- } -->
+          
+          <!-- ``` -->
+          
+          <!-- # Load target (observed) data (NO LONGER NEEDED) -->
+          
+          <!-- ```{r read-target} -->
+          
+          <!-- # # If loading most recent data:  -->
+          <!-- # target_path <- file.path(dir_path, "target-data", "time-series.csv") -->
+          <!-- # target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) -->
+          
+          
+          <!-- # If loading from a specific date:  -->
+          <!-- date_str <- format(as.Date(curr_origin_date), "%Y-%m-%d") -->
+          <!-- target_filename <- paste0(date_str, "_flu_target_hospital_admissions_data.csv") -->
+          
+          <!-- target_path <- file.path( -->
+          <!--   dir_path, -->
+          <!--   "weekly-summaries", -->
+          <!--   date_str, -->
+          <!--   target_filename -->
+          <!-- ) -->
+          
+          <!-- target_data_all <- readr::read_csv(target_path, show_col_types = FALSE) %>% -->
+          <!--   filter(week_ending_date < curr_origin_date) -->
+          
+          <!-- ``` -->
+          
+          <!-- # Modify data frame (NO LONGER NEEDED) -->
+          
+          <!-- ```{r data-prep} -->
+          
+          <!-- data_fit <- target_data_all %>% -->
+          <!--   dplyr::filter(location_name == state_name, -->
+          <!--                 week_ending_date > as.Date("2022-08-01")) %>% -->
+          <!--   dplyr::select(-location) %>% -->
+          <!--   dplyr::rename(location = location_name, -->
+          <!--                 count = value, -->
+          <!--                 date = week_ending_date) -->
+          <!-- ``` -->
+          

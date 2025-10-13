@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+
 ```
 
 
@@ -20,6 +22,9 @@ The package provides helper functions to convert data between hub format and var
 Convert hub data to tsibble for fable modeling
 
 ```{r, include=TRUE}
+
+library(AMPHForecastSuite)
+
 hub_data <- data.frame(
   date = seq.Date(as.Date("2023-01-01"), by = "week", length.out = 20),
   location = "US",
@@ -42,7 +47,7 @@ hub_forecasts <- convert_fable_to_hub(forecasts, location = "US")
 
 ### Hub ↔ EpiEstim
 
-```{r, include=TRUE}
+```{r, eval=FALSE, include=TRUE}
 # Prepare data for EpiEstim
 epiestim_data <- convert_hub_to_epiestim(
   hub_data, 
@@ -60,7 +65,7 @@ hub_r_estimates <- convert_epiestim_to_hub(res, location = "US")
 
 ### Hub ↔ EpiNow2
 
-```{r, include=TRUE}
+```{r, eval=FALSE, include=TRUE}
 # Prepare data for EpiNow2
 epinow2_data <- convert_hub_to_epinow2(
   hub_data,

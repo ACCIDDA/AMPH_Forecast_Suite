@@ -52,7 +52,7 @@ get_nhsn_data <- function(disease = "influenza",
                           geo_values = "MD",
                           forecast_date = "2025-10-12",
                           save_data = TRUE
-                          ) {
+) {
 
   # Validate disease parameter
   disease <- tolower(disease)
@@ -66,17 +66,43 @@ get_nhsn_data <- function(disease = "influenza",
   used_locations <- geo_values[geo_values %in% valid_locations]
   if (length(used_locations) == 0) {
     stop(sprintf(
-      "Invalid geo_values: '%s'. Must be state abbreviations or 'US'.",
+      "ERROR: Invalid geo_values: '%s'. Must be state abbreviations or 'US'.",
       paste(geo_values, collapse = ", ")
     ))
   }
 
   if (!disease %in% valid_diseases) {
     stop(sprintf(
-      "Invalid disease: '%s'. Must be one of: %s",
+      "ERROR: Invalid disease: '%s'. Must be one of: %s",
       disease,
       paste(valid_diseases, collapse = ", ")
     ))
+  }
+
+  # Validate forecast_date parameter
+  if (is.na(as.Date(forecast_date, format = "%Y-%m-%d"))) {
+    stop("ERROR: Invalid forecast_date format. Use 'YYYY-MM-DD'.")
+  }
+  if (weekdays(as.Date(forecast_date)) != "Sunday") {
+    stop("ERROR: forecast_date should be a Sunday.")
+  }
+  if (as.Date(forecast_date) < as.Date("2020-10-01")) {
+    stop("ERROR: forecast_date should be on or after 2020-10-01.")
+  }
+  if (as.Date(forecast_date) > Sys.Date()) {
+    stop("ERROR: forecast_date cannot be in the future.")
+  }
+
+  # Check if forecast_date is longer that 1 week ago. if so, set issue_date_max to forecast_date - 7
+  # -- issue dates are on sundays, and pertain to the data up to the prior week (i.e., up to the prior Saturday).
+  # -- time_value is the week starting date (Sunday) for the data for that week.
+
+  if (forecast_date <= Sys.Date() - 7) {
+    message("Important: forecast_date is more than 1 week ago. Pulling data issued prior to forecast_date.")
+    issue_date_max <- as.Date(forecast_date)
+    pull_prior_data <- TRUE
+  } else {
+    pull_prior_data <- FALSE
   }
 
   # Map disease names to NHSN signal names
@@ -89,25 +115,38 @@ get_nhsn_data <- function(disease = "influenza",
 
   signal <- signal_map[[disease]]
 
-  # Call epidatr to get the data
-  epidata <- epidatr::pub_covidcast(
-    source = "nhsn",
-    signals = "*",
-    geo_type = "state",
-    time_type = "week",
-    geo_values = geo_values,
-    issues = "*"
-  ) %>%
-    mutate(origin_date = as.Date(time_value) - 1,
-           issue_date = as.Date(issue) - 1)
 
-  epidata_filter <- epidata %>%
-    filter(signal == signal,
-           geo_value %in% used_locations,
-           time_value >= lubridate::as_date("2020-09-01"),
-           time_value < lubridate::as_date(forecast_date)) %>%
-    mutate(disease = disease, signal = signal) %>%
-    select(geo_value, source, disease, signal, issue_date, time_value, value)
+  # Call epidatr to get the data
+  if (pull_prior_data) {
+    message(paste0("Pulling data issued on or before ", issue_date_max))
+    epidata <- epidatr::pub_covidcast(
+      source = "nhsn",
+      signals = signal,
+      geo_type = "state",
+      time_type = "week",
+      geo_values = geo_values,
+      issues = "*")
+
+    epidata <- epidata %>%
+      dplyr::filter(issue <= issue_date_max) %>%
+      dplyr::filter(issue == max(issue)) # keep only most recent issue prior to issue_date_max
+
+  } else {
+    message("Pulling most recent data.")
+    epidata <- epidatr::pub_covidcast(
+      source = "nhsn",
+      signals = signal,
+      geo_type = "state",
+      time_type = "week",
+      geo_values = geo_values
+    )
+  }
+
+  epidata <- epidata %>%
+    dplyr::filter(time_value >= lubridate::as_date("2020-08-01"),
+                  time_value < lubridate::as_date(forecast_date)) %>%
+    dplyr::mutate(disease = disease, signal = signal) %>%
+    dplyr::select(geo_value, source, disease, signal, issue_date = issue, time_value, value)
 
   # Save data to CSV if requested
   if (save_data) {
@@ -118,11 +157,11 @@ get_nhsn_data <- function(disease = "influenza",
     }
 
     readr::write_csv(
-      epidata_filter,
+      epidata,
       file = file.path("target-data", paste0("target-hospital-admissions-", forecast_date, ".csv"))
     )
   }
 
-  # Return the result
-  return(result)
+  # Return the resulting data
+  return(epidata)
 }
