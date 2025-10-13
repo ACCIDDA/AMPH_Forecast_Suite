@@ -5,6 +5,7 @@
 \title{Install Forecasting Packages}
 \usage{
 install_forecast_packages(
+  install_delphi = TRUE,
   install_hubverse = TRUE,
   install_forecasting = TRUE,
   install_epi = TRUE,
@@ -13,6 +14,8 @@ install_forecast_packages(
 )
 }
 \arguments{
+\item{install_delphi}{Logical. If TRUE, installs delphi packages. Default is TRUE.}
+
 \item{install_hubverse}{Logical. If TRUE, installs hubverse packages. Default is TRUE.}
 
 \item{install_forecasting}{Logical. If TRUE, installs forecasting packages (fable, etc.). Default is TRUE.}

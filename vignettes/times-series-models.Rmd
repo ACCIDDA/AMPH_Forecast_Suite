@@ -31,14 +31,6 @@ library(forecast)
 library(jsonlite)
 library(ggplot2)
 library(epidatr)
-library(gitcreds)
-
-gitcreds_set()
-
-# Follow instructions about opening `.Renviron` file
-# Use 'e4cd912a31fb4' as the API key (without quotes)
-save_api_key()
-get_api_key()
 
 remotes::install_github("cmu-delphi/epipredict", upgrade = "never", dependencies = TRUE)
 remotes::install_github("cmu-delphi/epiprocess", upgrade = "never", dependencies = TRUE)

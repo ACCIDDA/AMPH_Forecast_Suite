@@ -4,43 +4,54 @@
 \alias{get_nhsn_data}
 \title{Get NHSN Weekly Hospitalization Data}
 \usage{
-get_nhsn_data(disease, geo_values = "US", time_values = NULL, ...)
+get_nhsn_data(
+  disease = "influenza",
+  geo_values = "MD",
+  forecast_date = "2025-10-12",
+  save_data = TRUE
+)
 }
 \arguments{
 \item{disease}{Character string specifying the disease. Must be one of:
 "influenza", "covid", or "rsv" (case-insensitive).}
 
-\item{geo_values}{Character vector of geographic locations (e.g., "US", state 
-abbreviations like "CA", "NY"). Default is "US" for national data.}
+\item{geo_values}{Character vector of geographic locations (e.g., state
+abbreviations like "CA", "NY"). Default is "MD" for Maryland data.}
 
-\item{time_values}{Character vector or range specifying the time period in 
-epiweek format (YYYYWW) or using epidatr time helpers like 
-epirange(202001, 202052). If NULL, retrieves all available data.}
+\item{forecast_date}{Character vector of the date of forecast in "YYYY-MM-DD". Should be a Sunday.}
 
-\item{...}{Additional arguments passed to epidatr::pub_nhs_facilities()}
+\item{save_data}{Logical. If TRUE, saves the retrieved data to a CSV file in the working directory.}
 }
 \value{
 A data frame containing NHSN hospitalization data with columns
   typically including geo_value, time_value, and hospitalization counts.
 }
 \description{
-Pulls weekly hospitalization count data from the NHSN (National Healthcare 
+Pulls weekly hospitalization count data from the NHSN (National Healthcare
 Safety Network) via the epidatr package for influenza, COVID-19, or RSV.
 }
 \examples{
 \dontrun{
-# Get national COVID-19 data for all available weeks
-covid_data <- get_nhsn_data(disease = "covid")
+# Get COVID-19 data for California and New York for specific weeks
+covid_data <- get_nhsn_data(
+  disease = "covid",
+  geo_values = c("ca", "ny"),
+  forecast_date = "2025-10-12"
+)
 
 # Get influenza data for California and New York for specific weeks
 flu_data <- get_nhsn_data(
   disease = "influenza",
   geo_values = c("ca", "ny"),
-  time_values = epirange(202201, 202252)
+  forecast_date = "2025-10-12"
 )
 
-# Get RSV data for the US
-rsv_data <- get_nhsn_data(disease = "rsv", geo_values = "US")
+# Get RSV data for MD
+rsv_data <- get_nhsn_data(
+  disease = "rsv",
+  geo_values = "MD",
+  forecast_date = "2025-10-12"
+)
 }
 
 }

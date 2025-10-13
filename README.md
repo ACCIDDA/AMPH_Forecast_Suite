@@ -186,7 +186,7 @@ This project is licensed under the GPL-3 License - see the [LICENSE](LICENSE) fi
 If you use this package in your research, please cite it as:
 
 ```
-ACCIDDA (2024). AMPH Forecast Suite: Tools for Infectious Disease Forecasting.
+ACCIDDA (2025). AMPH Forecast Suite: Tools for Infectious Disease Forecasting.
 R package version 0.1.0. https://github.com/ACCIDDA/AMPH_Forecast_Suite
 ```
 

@@ -1,5 +1,4 @@
 #' @keywords internal
-"_PACKAGE"
 
 ## usethis namespace: start
 #' @importFrom dplyr %>%
@@ -38,4 +37,4 @@ NULL
 #' @docType package
 #' @name AMPHForecastSuite-package
 #' @aliases AMPHForecastSuite
-NULL
+"_PACKAGE"

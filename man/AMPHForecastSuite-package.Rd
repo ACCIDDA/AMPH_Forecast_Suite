@@ -4,10 +4,8 @@
 \name{AMPHForecastSuite-package}
 \alias{AMPHForecastSuite-package}
 \alias{AMPHForecastSuite}
-\title{AMPHForecastSuite: Suite of Tools for Infectious Disease Forecasting Pipeline and Hub}
+\title{AMPH Forecast Suite}
 \description{
-A comprehensive suite of tools and helper functions to build and run an infectious disease forecasting hub. This package facilitates the installation and integration of key forecasting packages including hubverse packages, fable, EpiEstim, EpiNow2, epidatr, and epiforecast. It provides helper functions that translate data between different package formats to streamline forecasting workflows.
-
 A comprehensive suite of tools and helper functions to build and run
 an infectious disease forecasting hub. This package facilitates the
 installation and integration of key forecasting packages including
@@ -34,16 +32,8 @@ Useful links:
   \item Report bugs at \url{https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues}
 }
 
-
-Useful links:
-\itemize{
-  \item \url{https://github.com/ACCIDDA/AMPH_Forecast_Suite}
-  \item Report bugs at \url{https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues}
-}
-
 }
 \author{
 \strong{Maintainer}: ACCIDDA \email{info@example.com}
 
 }
-\keyword{internal}

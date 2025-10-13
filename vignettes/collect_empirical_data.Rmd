@@ -33,15 +33,22 @@ library(jsonlite)
 library(ggplot2)
 library(epidatr)
 library(epiprocess)
-library(gitcreds)
+```
 
-gitcreds_set()
+
+# Save and check API key
+
+1. Go to https://api.delphi.cmu.edu/epidata/admin/registration_form and register for a psuedo-anonymous account.
+
+2. Run the command below to save your API key in your `.Renviron` file. As it says in the prompt, add a line `DELPHI_EPIDATA_KEY=yourkeyhere` to your `.Renviron` file. Save and close the file, then restart R or RStudio. After restarting, run the command `epidatr::get_api_key()` to check that your API key is saved.
+
+```{r epidatr_api, eval=FALSE}
 
 # Follow instructions about opening `.Renviron` file
-# Use 'e4cd912a31fb4' as the API key (without quotes)
-save_api_key()
-get_api_key()
+epidatr::save_api_key()
 
+# Check that the API key is saved
+epidatr::get_api_key()
 
 ```
 

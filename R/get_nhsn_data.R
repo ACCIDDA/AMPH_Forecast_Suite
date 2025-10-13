@@ -42,8 +42,12 @@
 #' }
 #'
 #' @export
-
-#' @importFrom epidatr pub_nhs_facilities
+#'
+#' @importFrom epidatr pub_covidcast
+#' @importFrom readr write_csv
+#' @importFrom dplyr filter mutate select
+#' @importFrom lubridate as_date
+#'
 get_nhsn_data <- function(disease = "influenza",
                           geo_values = "MD",
                           forecast_date = "2025-10-12",

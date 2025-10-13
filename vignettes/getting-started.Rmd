@@ -20,7 +20,29 @@ The AMPH Forecast Suite provides a comprehensive toolkit for building infectious
 
 ## Installation
 
-First, install the AMPH Forecast Suite from CRAN or GitHub:
+First, ensure you have R (version 4.0 or higher) and RStudio installed.
+
+```{r}
+# Check R version
+R.Version()$version.string
+# Check RStudio version
+RStudio.Version()$version
+```
+
+Next, set your git credentials, if you have not already done this.
+
+```{r eval=FALSE}
+# Set your git credentials (replace with your actual info)
+install.packages("gitcreds")
+
+gitcreds::gitcreds_set(
+  username = "your_github_username",
+  password = "your_github_token"
+)
+```
+
+
+Next, install the AMPH Forecast Suite from CRAN or GitHub:
 
 ```{r eval=FALSE}
 # Install remotes if you haven't already
@@ -31,7 +53,7 @@ remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")
 ```
 
 
-First, install the required forecasting packages:
+Next, install the required forecasting packages:
 
 ```{r eval=FALSE}
 library(AMPHForecastSuite)
