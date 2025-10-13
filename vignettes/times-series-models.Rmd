@@ -49,7 +49,7 @@ get_api_key()
 if (!requireNamespace("AMPHForecastSuite", quietly = TRUE)) {
   suite_repo <- Sys.getenv("AMPH_SUITE_GH", unset = "")
   if (nzchar(suite_repo)) {
-    remotes::install_github(suite_repo, upgrade = "never", dependencies = TRUE)
+    remotes::install_github(suite_repo, dependencies = TRUE)
   } else {
     message(
       "AMPHForecastSuite not found. Set AMPH_SUITE_GH='org/repo' to auto-install, ",

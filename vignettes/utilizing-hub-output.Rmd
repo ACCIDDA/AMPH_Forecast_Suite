@@ -25,24 +25,6 @@ forecast_date <- as.Date("2024-11-30")
 Install & load required R packages
 
 ```{r packages}
-# Install CRAN deps first (safe if already installed)
-cran_pkgs <- c(
-  "remotes", "jsonlite", "readr", "dplyr", "purrr", "tidyr",
-  "ggplot2", "viridisLite", "scales"
-)
-to_install <- setdiff(cran_pkgs, rownames(installed.packages()))
-if (length(to_install)) install.packages(to_install, dependencies = TRUE)
-
-# Install hubverse packages from GitHub if missing
-gh_pkgs <- c("hubverse-org/hubEnsembles", "hubverse-org/hubUtils", "hubverse-org/hubVis",
-             "epiforecasts/scoringutils")
-need_gh <- c(!requireNamespace("hubEnsembles", quietly = TRUE),
-             !requireNamespace("hubUtils", quietly = TRUE),
-             !requireNamespace("hubVis", quietly = TRUE),
-             !requireNamespace("scoringutils", quietly = TRUE))
-if (any(need_gh)) {
-  remotes::install_github(gh_pkgs[need_gh], upgrade = "never", dependencies = TRUE)
-}
 
 library(hubEnsembles)
 library(hubUtils)
