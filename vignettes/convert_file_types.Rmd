@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-### 2. Convert Data Between Formats
+## Convert Data Between Formats
 
 The package provides helper functions to convert data between hub format and various forecasting package formats:
 
@@ -40,7 +40,7 @@ forecasts <- model %>% forecast(h = 4)
 hub_forecasts <- convert_fable_to_hub(forecasts, location = "US")
 ```
 
-#### Hub ↔ EpiEstim
+### Hub ↔ EpiEstim
 
 ```{r, include=TRUE}
 # Prepare data for EpiEstim
@@ -58,7 +58,7 @@ res <- estimate_R(epiestim_data, method = "parametric_si",
 hub_r_estimates <- convert_epiestim_to_hub(res, location = "US")
 ```
 
-#### Hub ↔ EpiNow2
+### Hub ↔ EpiNow2
 
 ```{r, include=TRUE}
 # Prepare data for EpiNow2
@@ -77,4 +77,106 @@ res <- epinow(
 
 # Convert results back to hub format
 hub_forecasts <- convert_epinow2_to_hub(res, location = "US")
+```
+
+
+
+
+## Working with Hub Data
+
+### Converting to Fable Format
+
+The package makes it easy to convert hub-formatted data to work with the fable forecasting package:
+
+```{r eval=FALSE}
+library(AMPHForecastSuite)
+
+# Create sample hub data
+hub_data <- data.frame(
+  date = seq.Date(as.Date("2023-01-01"), by = "week", length.out = 20),
+  location = "US",
+  value = rnorm(20, 100, 10)
+)
+
+# Convert to tsibble format for fable
+ts_data <- convert_hub_to_tsibble(hub_data)
+print(ts_data)
+```
+
+### Using Fable for Forecasting
+
+Once your data is in tsibble format, you can use fable for forecasting:
+
+```{r eval=FALSE}
+library(fable)
+library(tsibble)
+
+# Fit a model
+model <- ts_data %>% 
+  model(
+    arima = ARIMA(value),
+    ets = ETS(value)
+  )
+
+# Generate forecasts
+forecasts <- model %>% forecast(h = 4)
+
+# Convert back to hub format
+hub_forecasts <- convert_fable_to_hub(forecasts, location = "US", target = "inc")
+```
+
+## Working with EpiEstim
+
+EpiEstim is used to estimate time-varying reproduction numbers:
+
+```{r eval=FALSE}
+library(EpiEstim)
+
+# Prepare daily case data
+hub_data_daily <- data.frame(
+  date = seq.Date(as.Date("2023-01-01"), by = "day", length.out = 50),
+  location = "US",
+  value = rpois(50, 100)
+)
+
+# Convert to EpiEstim format
+epiestim_data <- convert_hub_to_epiestim(hub_data_daily, location_filter = "US")
+
+# Estimate R
+res <- estimate_R(
+  epiestim_data, 
+  method = "parametric_si",
+  config = make_config(list(mean_si = 7, std_si = 4.5))
+)
+
+# Convert results back to hub format
+hub_r_estimates <- convert_epiestim_to_hub(res, location = "US")
+print(hub_r_estimates)
+```
+
+## Working with EpiNow2
+
+EpiNow2 provides more sophisticated estimation and forecasting with delay distributions:
+
+```{r eval=FALSE}
+library(EpiNow2)
+
+# Prepare data for EpiNow2
+epinow2_data <- convert_hub_to_epinow2(hub_data_daily, location_filter = "US")
+
+# Run EpiNow2 (simplified example)
+# Note: You would need to specify generation time and delay distributions
+res <- epinow(
+  reported_cases = epinow2_data,
+  generation_time = generation_time_opts(
+    Generation_Time_Opts(mean = 5, sd = 2)
+  ),
+  delays = delay_opts(
+    Delay_Opts(mean = 3, sd = 1)
+  )
+)
+
+# Convert results back to hub format
+hub_forecasts <- convert_epinow2_to_hub(res, location = "US")
+print(hub_forecasts)
 ```

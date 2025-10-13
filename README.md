@@ -23,13 +23,7 @@ remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")
 ```
 ## Usage
 
-
-
-
-
-
-
-## 1. Install Packages and Build Directory Structure
+### 1. Install Packages and Build Directory Structure
 
 The package includes a function to install all required packages and set up a directory structure for your forecasting project.
 
@@ -49,72 +43,26 @@ install_forecast_packages(
 )
 ```
 
-### 2. Convert Data Between Formats
 
-The package provides helper functions to convert data between hub format and various forecasting package formats:
+## Summary
 
-#### Hub ↔ Fable/tsibble
+The AMPH Forecast Suite simplifies the process of:
 
-```r
-# Convert hub data to tsibble for fable modeling
-hub_data <- data.frame(
-  date = seq.Date(as.Date("2023-01-01"), by = "week", length.out = 20),
-  location = "US",
-  value = rnorm(20, 100, 10)
-)
+1. Installing necessary packages
+2. Setting up appropriate directory structure
+3. Pulling and manipulating data to use with forecasting models
+4. Ensembling, visualizing, and evaluating forecasts
 
-# Convert to tsibble format
-ts_data <- convert_hub_to_tsibble(hub_data)
+For more information, see the package documentation and function help pages.
 
-# Use with fable
-library(fable)
-library(tsibble)
-model <- ts_data %>% 
-  model(arima = ARIMA(value))
 
-# Convert fable forecasts back to hub format
-forecasts <- model %>% forecast(h = 4)
-hub_forecasts <- convert_fable_to_hub(forecasts, location = "US")
-```
 
-#### Hub ↔ EpiEstim
 
-```r
-# Prepare data for EpiEstim
-epiestim_data <- convert_hub_to_epiestim(
-  hub_data, 
-  location_filter = "US"
-)
 
-# Run EpiEstim (example)
-library(EpiEstim)
-res <- estimate_R(epiestim_data, method = "parametric_si",
-                  config = make_config(list(mean_si = 7, std_si = 4.5)))
+## Other key functionality
 
-# Convert results back to hub format
-hub_r_estimates <- convert_epiestim_to_hub(res, location = "US")
-```
+### 1. Forecasting workflow quick set up
 
-#### Hub ↔ EpiNow2
-
-```r
-# Prepare data for EpiNow2
-epinow2_data <- convert_hub_to_epinow2(
-  hub_data,
-  location_filter = "US"
-)
-
-# Run EpiNow2 (example)
-library(EpiNow2)
-res <- epinow(
-  reported_cases = epinow2_data,
-  generation_time = generation_time_opts(Generation_Time_Opts(...)),
-  delays = delay_opts(Delay_Opts(...))
-)
-
-# Convert results back to hub format
-hub_forecasts <- convert_epinow2_to_hub(res, location = "US")
-```
 
 ## Available Functions
 
