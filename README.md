@@ -21,6 +21,7 @@ install.packages("remotes")
 # Install AMPH Forecast Suite
 remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")
 ```
+
 ## Usage
 
 ### 1. Install Packages and Build Directory Structure

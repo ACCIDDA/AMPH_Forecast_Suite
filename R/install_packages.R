@@ -28,12 +28,34 @@ install_forecast_packages <- function(install_hubverse = TRUE,
                                      install_epi = TRUE,
                                      install_data = TRUE,
                                      repos = "https://cloud.r-project.org") {
-  
+
+  # general packages
+  general_packages <- c("remotes", "jsonlite", "readr", "dplyr", "tidyr", "tibble", "lubridate",
+                        "purrr", "ggplot2", "viridisLite", "scales")
+
+  # Try to install from CRAN first, then from GitHub if not available
+  for (pkg in hubverse_pkgs) {
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      tryCatch({
+        utils::install.packages(pkg, repos = repos)
+      }, error = function(e) {
+        message(sprintf("Package %s not on CRAN, trying GitHub...", pkg))
+        if (requireNamespace("remotes", quietly = TRUE)) {
+          remotes::install_github(paste0("hubverse-org/", pkg))
+        } else {
+          message("Please install 'remotes' package to install from GitHub")
+        }
+      })
+    }
+  }
+
+
   # Hubverse packages
   if (install_hubverse) {
     message("Installing hubverse packages...")
-    hubverse_pkgs <- c("hubData", "hubUtils", "hubValidations", "hubVis", "hubAdmin")
-    
+    hubverse_pkgs <- c("hubData", "hubUtils", "hubValidations", "hubVis", "hubAdmin",
+                       "hubEvals","scoringutils")
+
     # Try to install from CRAN first, then from GitHub if not available
     for (pkg in hubverse_pkgs) {
       if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -50,24 +72,24 @@ install_forecast_packages <- function(install_hubverse = TRUE,
       }
     }
   }
-  
+
   # Forecasting packages (fable ecosystem)
   if (install_forecasting) {
     message("Installing forecasting packages...")
-    forecasting_pkgs <- c("fable", "fabletools", "feasts", "tsibble")
-    
+    forecasting_pkgs <- c("fable", "fabletools", "feasts", "tsibble", "tsibbledata", "forecast")
+
     for (pkg in forecasting_pkgs) {
       if (!requireNamespace(pkg, quietly = TRUE)) {
         utils::install.packages(pkg, repos = repos)
       }
     }
   }
-  
+
   # Epidemiological modeling packages
   if (install_epi) {
     message("Installing epidemiological packages...")
     epi_pkgs <- c("EpiEstim", "EpiNow2", "epipredict")
-    
+
     for (pkg in epi_pkgs) {
       if (!requireNamespace(pkg, quietly = TRUE)) {
         tryCatch({
@@ -78,12 +100,12 @@ install_forecast_packages <- function(install_hubverse = TRUE,
       }
     }
   }
-  
+
   # Data access packages
   if (install_data) {
     message("Installing data access packages...")
     data_pkgs <- c("epidatr")
-    
+
     for (pkg in data_pkgs) {
       if (!requireNamespace(pkg, quietly = TRUE)) {
         tryCatch({
@@ -97,7 +119,7 @@ install_forecast_packages <- function(install_hubverse = TRUE,
       }
     }
   }
-  
+
   message("Package installation complete!")
   invisible(NULL)
 }

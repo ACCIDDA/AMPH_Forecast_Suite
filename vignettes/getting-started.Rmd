@@ -20,6 +20,17 @@ The AMPH Forecast Suite provides a comprehensive toolkit for building infectious
 
 ## Installation
 
+First, install the AMPH Forecast Suite from CRAN or GitHub:
+
+```{r eval=FALSE}
+# Install remotes if you haven't already
+install.packages("remotes")
+
+# Install AMPH Forecast Suite
+remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")
+```
+
+
 First, install the required forecasting packages:
 
 ```{r eval=FALSE}
