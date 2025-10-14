@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
 
 state_name <- "Maryland"
 geo_ids <- "md"
-forecast_date <- as.Date("2024-11-30")
+forecast_date <- as.Date("2024-12-01")
 forecast_disease <- "influenza"
 target <- "wk inc flu hosp"
 forecast_horizon_wks <- 0:3
@@ -40,6 +40,9 @@ library(jsonlite)
 library(readr)
 library(tidyr)
 library(scales)
+
+reference_date <- get_reference_date(forecast_date)
+
 
 ```
 
@@ -82,7 +85,7 @@ models_created_in_AMPH <- list.dirs("model-output",
 ```{r, eval=TRUE, message=TRUE}
 # copy Forecast Hub forecasts to model-output folder
 copy_fch_outputs(repo_dir,
-                 forecast_date,
+                 reference_date,
                  models_to_copy)
 ```
 
@@ -95,10 +98,10 @@ output_path <- file.path("model-output")
 # Retrieve parquet/csv model output files and keep those matching the reference date
 file_paths <- list.files(output_path, pattern = "\\.(parquet|csv)$",
                          full.names = TRUE, recursive = TRUE)
-file_paths <- file_paths[grepl(forecast_date, file_paths)]
+file_paths <- file_paths[grepl(reference_date, file_paths)]
 
 if (!length(file_paths)) {
-  stop("No model-output files found for forecast_date = ", forecast_date,
+  stop("No model-output files found for reference_date = ", reference_date,
        ". Try a different date.")
 }
 
@@ -117,13 +120,13 @@ projection_data_all <- file_paths %>%
       dplyr::filter(.data$output_type == "quantile") %>%
       dplyr::mutate(
         output_type_id = suppressWarnings(as.numeric(.data$output_type_id)),
-        model_id = basename(dirname(.x))
+        model_id = basename(dirname(.x)),
+        location = as.character(location)
       )
   })
 
 prep_proj_data <- projection_data_all %>%
   dplyr::mutate(
-    # reference_date  = forecast_date,
     target_end_date = dplyr::coalesce(target_end_date, reference_date + 7 * as.integer(horizon))
   ) %>%
   dplyr::select(-tidyselect::any_of(c("model", "origin_date")))
@@ -164,7 +167,7 @@ dplyr::distinct(projection_data_tbl, model_id) %>% knitr::kable()
 ```{r params}
 # Location can be "US" or a full state name (must match location_name in target_data)
 loc <- state_name
-start_date <- lubridate::as_date(forecast_date) - lubridate::weeks(12)
+start_date <- lubridate::as_date(reference_date) - lubridate::weeks(12)
 # Middle 80% interval:
 uncertainty <- c(0.1, 0.9)
 
@@ -189,13 +192,16 @@ round_dat <- projection_data_tbl2 %>%
 # Generate a simple (equal-weight) ensemble across contributing models
 round_ens <- hubEnsembles::simple_ensemble(
   round_dat %>%
-    dplyr::filter(!(model_id %in% c("FluSight-baseline",
-                                    "FluSight-ensemble",
-                                    "AMPH-epipredict-climate")))) %>%
+    dplyr::filter(model_id %in% c("AMPH-SARIMA","AMPH-neuralnetwork", "MOBS-GLEAM_FLUH"))) %>% 
+    # dplyr::filter(!(model_id %in% c("FluSight-baseline", "AMPH-SARIMA","AMPH-neuralnetwork",
+    #                                 "FluSight-ensemble",
+    #                                 "AMPH-epipredict-climate")))) %>%
   mutate(model_id = "AMPH-ensemble")
 
 # Combine ensemble with individual models for plotting
 plot_df <- dplyr::bind_rows(round_dat, round_ens)
+
+# lapply(unique(round_dat$model_id), function(x){round_dat %>% filter(model_id==x) %>% pull(output_type_id) %>% unique() %>% length()})
 
 unique(plot_df$model_id)
 ```
@@ -207,7 +213,7 @@ unique(plot_df$model_id)
 ```{r viz-prep}
 
 # pull updated target data
-new_target_data_date <- lubridate::as_date(forecast_date) + lubridate::weeks(5)
+new_target_data_date <- lubridate::as_date(reference_date) + lubridate::weeks(5)
 target_data_plot <- get_nhsn_data(
   disease = forecast_disease,
   geo_values = geo_ids,
@@ -227,9 +233,8 @@ proj_data <- hubUtils::as_model_out_tbl(plot_df) %>%
 
 # Observed data for the same location and time window
 target_data_plot <- target_data_plot %>%
-  dplyr::filter(time_value > start_date) %>%
-  dplyr::rename(observation = value,
-                date = time_value)
+  dplyr::filter(target_end_date > start_date) %>%
+  dplyr::rename(date = target_end_date)
 
 head(proj_data)
 head(target_data_plot)
@@ -357,12 +362,12 @@ target_data_plot <- readr::read_csv(
   show_col_types = FALSE)
 
 scoring_target_data <- target_data_plot %>%
-  filter(geo_value %in% geo_ids,
-         issue_date >= forecast_date + 28,
-         time_value > "2022-09-01") %>%
-  select(geo_value, time_value, value) %>%
+  filter(location %in% location,
+         issue_date >= target_end_date + 28,
+         target_end_date > "2022-09-01") %>%
+  select(geo_value = location, target_end_date, value = observation) %>%
   drop_na(value) %>%
-  epiprocess::as_epi_df(time_value = time_value)
+  epiprocess::as_epi_df(time_value = target_end_date)
 ```
 
 ```{r scoring, eval=FALSE}

@@ -48,7 +48,7 @@ trans_epipredclim_hv <- function(fc_output = climate_forecast,
     epipredict::pivot_quantiles_longer(.pred_distn) %>%
     dplyr::mutate(output_type = "quantile",
                   reference_date = lubridate::as_date(reference_date),
-                  target_end_date = lubridate::as_date(target_date) + 6) %>%
+                  target_end_date = lubridate::as_date(target_date)) %>%
     dplyr::select(target_end_date, reference_date, target, horizon, location, model,
                   output_type, output_type_id = .pred_distn_quantile_level, value = .pred_distn_value)
 

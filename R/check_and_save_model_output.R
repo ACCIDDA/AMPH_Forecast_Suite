@@ -20,7 +20,7 @@
 #'
 save_model_output <- function(model_name = "AMPH-SARIMA",
                               fc_output,
-                              forecast_date) {
+                              reference_date) {
 
   if (!is.character(model_name) || length(model_name) != 1) {
     stop("model_name must be a string.")
@@ -47,7 +47,7 @@ save_model_output <- function(model_name = "AMPH-SARIMA",
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
   fc_filename <- file.path(output_dir,
-                           sprintf("%s-%s.csv", forecast_date, model_name))
+                           sprintf("%s-%s.csv", reference_date, model_name))
   # Save it
   readr::write_csv(fc_output, fc_filename)
   message("Model output saved to ", fc_filename)
