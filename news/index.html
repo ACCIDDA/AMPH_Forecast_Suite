@@ -18,11 +18,11 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/collect_empirical_data.html">2. Collect Empirical Data for Forecasting</a></li>
-    <li><a class="dropdown-item" href="../articles/convert_file_types.html">Other: Converting File Types</a></li>
-    <li><a class="dropdown-item" href="../articles/getting-started.html">1. Getting Started with AMPH Forecast Suite</a></li>
-    <li><a class="dropdown-item" href="../articles/times-series-models.html">3. Forecasting with Time Series Models</a></li>
-    <li><a class="dropdown-item" href="../articles/utilizing-hub-output.html">4. Ensembling, Visualization, and Scoring Forecasting Outputs</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/01-getting-started.html">1. Getting Started with AMPH Forecast Suite</a></li>
+    <li><a class="dropdown-item" href="../articles/02-collect_empirical_data.html">2. Collect Empirical Data for Forecasting</a></li>
+    <li><a class="dropdown-item" href="../articles/03-times-series-models.html">3. Forecasting with Time Series Models</a></li>
+    <li><a class="dropdown-item" href="../articles/04-utilizing-hub-output.html">4. Ensembling, Visualization, and Scoring Forecasting Outputs</a></li>
+    <li><a class="dropdown-item" href="../articles/05-convert_file_types.html">Other: Converting File Types</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -46,11 +46,6 @@
 <h3 id="initial-release-0-1-0">Initial Release<a class="anchor" aria-label="anchor" href="#initial-release-0-1-0"></a></h3>
 <ul><li>Initial release of AMPH Forecast Suite package</li>
 <li>Added <code><a href="../reference/install_forecast_packages.html">install_forecast_packages()</a></code> function to install all required forecasting packages</li>
-<li>Added data conversion functions between hub format and other packages:
-<ul><li>Fable/tsibble converters (<code><a href="../reference/convert_hub_to_fable.html">convert_hub_to_fable()</a></code>, <code><a href="../reference/convert_fable_to_hub.html">convert_fable_to_hub()</a></code>, etc.)</li>
-</ul></li>
-<li>EpiEstim converters (<code><a href="../reference/convert_hub_to_epiestim.html">convert_hub_to_epiestim()</a></code>, <code><a href="../reference/convert_epiestim_to_hub.html">convert_epiestim_to_hub()</a></code>)</li>
-<li>EpiNow2 converters (<code><a href="../reference/convert_hub_to_epinow2.html">convert_hub_to_epinow2()</a></code>, <code><a href="../reference/convert_epinow2_to_hub.html">convert_epinow2_to_hub()</a></code>)</li>
 <li>Support for installing hubverse packages (hubData, hubUtils, hubValidations, hubVis, hubAdmin)</li>
 <li>Support for forecasting packages (fable, fabletools, feasts, tsibble)</li>
 <li>Support for epidemiological packages (EpiEstim, EpiNow2, epipredict)</li>
