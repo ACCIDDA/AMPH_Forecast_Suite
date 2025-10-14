@@ -1,5 +1,5 @@
 ---
-title: "AMPH 2025: Forecasting with Time Series Models"
+title: "3. Forecasting with Time Series Models"
 output:
   html_document:
     toc: true

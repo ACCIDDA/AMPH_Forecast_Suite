@@ -1,5 +1,5 @@
 ---
-title: "Getting Started with AMPH Forecast Suite"
+title: "1. Getting Started with AMPH Forecast Suite"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Getting Started with AMPH Forecast Suite}
@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-The AMPH Forecast Suite provides a comprehensive toolkit for building infectious disease forecasting pipelines and hubs. This vignette demonstrates the basic workflow for using the package.
+The AMPH Forecast Suite provides a comprehensive toolkit for building infectious disease forecasting pipelines and hubs. This vignette demonstrates the basic workflow for using this package. This package and suite are still under active development, and we welcome contributions and feedback from the community.
+
 
 ## Installation
 
@@ -25,8 +26,6 @@ First, ensure you have R (version 4.0 or higher) and RStudio installed.
 ```{r}
 # Check R version
 R.Version()$version.string
-# Check RStudio version
-# RStudio.Version()$version
 ```
 
 Next, set your git credentials, if you have not already done this.

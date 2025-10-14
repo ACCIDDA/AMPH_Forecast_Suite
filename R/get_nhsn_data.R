@@ -145,6 +145,21 @@ get_nhsn_data <- function(disease = "influenza",
     dplyr::mutate(disease = disease, signal = signal) %>%
     dplyr::select(geo_value, source, disease, signal, issue_date = issue, time_value, value)
 
+  # convert to match hubverse
+
+  data("loc_data")
+
+  epidata <- epidata %>%
+    dplyr::mutate(abbreviation = toupper(geo_value)) %>%
+    dplyr::mutate(target_end_date = time_value + 6) %>%
+    dplyr::mutate(target = paste0("wk inc ", disease, " hosp")) %>%
+    dplyr::left_join(loc_data %>% dplyr::select(abbreviation, location, location_name),
+                     by = c("abbreviation" = "abbreviation")) %>%
+    dplyr::arrange(target_end_date, location_name) %>%
+    dplyr::select(location, abbreviation, location_name, target, source, disease, signal,
+                  target_end_date, issue_date, observation = value)
+
+
   # Save data to CSV if requested
   if (save_data) {
 
