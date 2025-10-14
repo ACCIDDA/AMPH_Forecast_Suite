@@ -35,11 +35,11 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/collect_empirical_data.html">AMPH 2025: Pull NHSN Hospitalization Data for Forecasting</a></li>
-    <li><a class="dropdown-item" href="articles/convert_file_types.html">Converting File Types</a></li>
-    <li><a class="dropdown-item" href="articles/getting-started.html">Getting Started with AMPH Forecast Suite</a></li>
-    <li><a class="dropdown-item" href="articles/times-series-models.html">AMPH 2025: Forecasting with Time Series Models</a></li>
-    <li><a class="dropdown-item" href="articles/utilizing-hub-output.html">AMPH 2025: Simple Ensemble, Visualization, and Scoring Using Hub Model Output</a></li>
+<li><a class="dropdown-item" href="articles/collect_empirical_data.html">1. Collect Empirical Data for Forecasting</a></li>
+    <li><a class="dropdown-item" href="articles/convert_file_types.html">Other: Converting File Types</a></li>
+    <li><a class="dropdown-item" href="articles/getting-started.html">1. Getting Started with AMPH Forecast Suite</a></li>
+    <li><a class="dropdown-item" href="articles/times-series-models.html">3. Forecasting with Time Series Models</a></li>
+    <li><a class="dropdown-item" href="articles/utilizing-hub-output.html">4. Ensembling, Visualization, and Scoring Forecasting Outputs</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -66,9 +66,14 @@
 <p>The AMPH Forecast Suite is an R package that provides a comprehensive toolkit for building infectious disease forecasting pipelines and hubs. It streamlines the process of working with multiple forecasting packages by:</p>
 <ul>
 <li>Installing and managing dependencies for key forecasting packages</li>
+<li>Setting up appropriate directory structure</li>
+<li>Pulling and manipulating data to use with forecasting models</li>
 <li>Providing helper functions to translate data between different package formats</li>
-<li>Facilitating integration with hubverse, fable, EpiEstim, EpiNow2, epidatr, and epiforecast packages</li>
+<li>Running forecasts using multiple packages</li>
+<li>Ensembling, visualizing, and evaluating forecasts</li>
+<li>Producing outputs compatible with forecast hubs and evaluation tools</li>
 </ul>
+<p>For more information, see the package documentation and function help pages.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -80,10 +85,6 @@
 <span></span>
 <span><span class="co"># Install AMPH Forecast Suite</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ACCIDDA/AMPH_Forecast_Suite"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
-</h2>
 <div class="section level3">
 <h3 id="install-packages-and-build-directory-structure">Install Packages and Build Directory Structure<a class="anchor" aria-label="anchor" href="#install-packages-and-build-directory-structure"></a>
 </h3>
@@ -104,85 +105,7 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
-</h2>
-<p>The AMPH Forecast Suite simplifies the process of:</p>
-<ol style="list-style-type: decimal">
-<li>Installing necessary packages</li>
-<li>Setting up appropriate directory structure</li>
-<li>Pulling and manipulating data to use with forecasting models</li>
-<li>Running forecasts using multiple packages</li>
-<li>Ensembling, visualizing, and evaluating forecasts</li>
-</ol>
-<p>For more information, see the package documentation and function help pages.</p>
-</div>
-<div class="section level2">
-<h2 id="available-functions">Available Functions<a class="anchor" aria-label="anchor" href="#available-functions"></a>
-</h2>
-<div class="section level3">
-<h3 id="package-installation">Package Installation<a class="anchor" aria-label="anchor" href="#package-installation"></a>
-</h3>
-<ul>
-<li>
-<code><a href="reference/install_forecast_packages.html">install_forecast_packages()</a></code>: Install all required forecasting packages</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="data-conversion-functions">Data Conversion Functions<a class="anchor" aria-label="anchor" href="#data-conversion-functions"></a>
-</h3>
-<div class="section level4">
-<h4 id="fabletsibble-converters">Fable/tsibble Converters<a class="anchor" aria-label="anchor" href="#fabletsibble-converters"></a>
-</h4>
-<ul>
-<li>
-<code><a href="reference/convert_hub_to_tsibble.html">convert_hub_to_tsibble()</a></code>: Convert hub format to tsibble</li>
-<li>
-<code><a href="reference/convert_hub_to_fable.html">convert_hub_to_fable()</a></code>: Convert hub format for fable modeling</li>
-<li>
-<code><a href="reference/convert_fable_to_hub.html">convert_fable_to_hub()</a></code>: Convert fable forecasts to hub format</li>
-<li>
-<code><a href="reference/convert_tsibble_to_hub.html">convert_tsibble_to_hub()</a></code>: Convert tsibble back to hub format</li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="epiestim-converters">EpiEstim Converters<a class="anchor" aria-label="anchor" href="#epiestim-converters"></a>
-</h4>
-<ul>
-<li>
-<code><a href="reference/convert_hub_to_epiestim.html">convert_hub_to_epiestim()</a></code>: Convert hub format to EpiEstim format</li>
-<li>
-<code><a href="reference/convert_epiestim_to_hub.html">convert_epiestim_to_hub()</a></code>: Convert EpiEstim results to hub format</li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="epinow2-converters">EpiNow2 Converters<a class="anchor" aria-label="anchor" href="#epinow2-converters"></a>
-</h4>
-<ul>
-<li>
-<code><a href="reference/convert_hub_to_epinow2.html">convert_hub_to_epinow2()</a></code>: Convert hub format to EpiNow2 format</li>
-<li>
-<code><a href="reference/convert_epinow2_to_hub.html">convert_epinow2_to_hub()</a></code>: Convert EpiNow2 results to hub format</li>
-</ul>
-</div>
-</div>
-<div class="section level3">
-<h3 id="additional-resources">Additional Resources<a class="anchor" aria-label="anchor" href="#additional-resources"></a>
-</h3>
-<ul>
-<li>
-<strong>hubEvals Documentation</strong>: <a href="https://hubverse-org.github.io/hubEvals/" class="external-link">https://hubverse-org.github.io/hubEvals/</a>
-</li>
-<li>
-<strong>WIS Scoring Function</strong>: <a href="https://hubverse-org.github.io/hubEvals/reference/score_wis.html" class="external-link">score_wis() reference</a>
-</li>
-<li>
-<strong>Data Format Requirements</strong>: <a href="https://hubverse-org.github.io/hubEvals/articles/format-data.html" class="external-link">Formatting data for hubEvals</a>
-</li>
-</ul>
-</div>
-</div>
-<div class="section level2">
-<h2 id="package-dependencies">Package Dependencies<a class="anchor" aria-label="anchor" href="#package-dependencies"></a>
+<h2 id="packages-for-infectious-disease-forecasting">Packages for Infectious Disease Forecasting<a class="anchor" aria-label="anchor" href="#packages-for-infectious-disease-forecasting"></a>
 </h2>
 <p>The package helps you install and work with:</p>
 <div class="section level3">
@@ -203,6 +126,7 @@
 <li>fable: Forecasting models for tidy time series</li>
 <li>fabletools: Tools for working with fable models</li>
 <li>feasts: Feature extraction and statistics for time series</li>
+<li>epiforecast: Tools for infectious disease forecasting</li>
 <li>tsibble: Tidy temporal data frames</li>
 </ul>
 </div>
@@ -222,6 +146,21 @@
 <li>epidatr: Access epidemiological data from various sources</li>
 </ul>
 </div>
+</div>
+<div class="section level2">
+<h2 id="additional-resources">Additional Resources<a class="anchor" aria-label="anchor" href="#additional-resources"></a>
+</h2>
+<ul>
+<li>
+<strong>hubEvals Documentation</strong>: <a href="https://hubverse-org.github.io/hubEvals/" class="external-link">https://hubverse-org.github.io/hubEvals/</a>
+</li>
+<li>
+<strong>WIS Scoring Function</strong>: <a href="https://hubverse-org.github.io/hubEvals/reference/score_wis.html" class="external-link">score_wis() reference</a>
+</li>
+<li>
+<strong>Data Format Requirements</strong>: <a href="https://hubverse-org.github.io/hubEvals/articles/format-data.html" class="external-link">Formatting data for hubEvals</a>
+</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>

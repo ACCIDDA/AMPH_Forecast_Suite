@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>AMPH 2025: Pull NHSN Hospitalization Data for Forecasting • AMPHForecastSuite</title>
+<title>1. Collect Empirical Data for Forecasting • AMPHForecastSuite</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="AMPH 2025: Pull NHSN Hospitalization Data for Forecasting">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="1. Collect Empirical Data for Forecasting">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,11 +33,11 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/collect_empirical_data.html">AMPH 2025: Pull NHSN Hospitalization Data for Forecasting</a></li>
-    <li><a class="dropdown-item" href="../articles/convert_file_types.html">Converting File Types</a></li>
-    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with AMPH Forecast Suite</a></li>
-    <li><a class="dropdown-item" href="../articles/times-series-models.html">AMPH 2025: Forecasting with Time Series Models</a></li>
-    <li><a class="dropdown-item" href="../articles/utilizing-hub-output.html">AMPH 2025: Simple Ensemble, Visualization, and Scoring Using Hub Model Output</a></li>
+<li><a class="dropdown-item" href="../articles/collect_empirical_data.html">1. Collect Empirical Data for Forecasting</a></li>
+    <li><a class="dropdown-item" href="../articles/convert_file_types.html">Other: Converting File Types</a></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">1. Getting Started with AMPH Forecast Suite</a></li>
+    <li><a class="dropdown-item" href="../articles/times-series-models.html">3. Forecasting with Time Series Models</a></li>
+    <li><a class="dropdown-item" href="../articles/utilizing-hub-output.html">4. Ensembling, Visualization, and Scoring Forecasting Outputs</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -60,7 +60,9 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>AMPH 2025: Pull NHSN Hospitalization Data for Forecasting</h1>
+      <h1>1. Collect Empirical Data for Forecasting</h1>
+            <h3 data-toc-skip class="subtitle">Using NHSN
+Hospitalization Data</h3>
             
       
       <small class="dont-index">Source: <a href="https://github.com/ACCIDDA/AMPH_Forecast_Suite/blob/main/vignettes/collect_empirical_data.Rmd" class="external-link"><code>vignettes/collect_empirical_data.Rmd</code></a></small>
@@ -76,7 +78,7 @@
 <code class="sourceCode R"><span><span class="va">state_name</span> <span class="op">&lt;-</span> <span class="st">"Maryland"</span></span>
 <span><span class="va">geo_ids</span> <span class="op">&lt;-</span> <span class="st">"md"</span></span>
 <span><span class="va">forecast_disease</span> <span class="op">&lt;-</span> <span class="st">"influenza"</span></span>
-<span><span class="va">forecast_date</span> <span class="op">=</span> <span class="st">"2024-11-30"</span> <span class="co">#"2025-10-12"</span></span></code></pre></div>
+<span><span class="va">forecast_date</span> <span class="op">=</span> <span class="st">"2024-12-01"</span> <span class="co">#"2025-10-12" # Sunday</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="load-packages">Load packages<a class="anchor" aria-label="anchor" href="#load-packages"></a>
@@ -114,7 +116,7 @@ saved.</p></li>
 <span>  save_data <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Important: forecast_date is more than 1 week ago. Pulling data issued prior to forecast_date.</span></span></code></pre>
-<pre><code><span><span class="co">## Pulling data issued on or before 2024-11-30</span></span></code></pre>
+<pre><code><span><span class="co">## Pulling data issued on or before 2024-12-01</span></span></code></pre>
 <pre><code><span><span class="co">## Warning: No API key found. You will be limited to non-complex queries and encounter rate</span></span>
 <span><span class="co">## limits if you proceed.</span></span>
 <span><span class="co">## <span style="color: #00BBBB;">ℹ</span> See `?save_api_key()` for details on obtaining and setting API keys.</span></span>
@@ -151,27 +153,39 @@ above.</p>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">time_value</span> <span class="op">&gt;=</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_date</a></span><span class="op">(</span><span class="st">"2020-09-01"</span><span class="op">)</span>,</span>
 <span>                <span class="va">time_value</span> <span class="op">&lt;</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_date</a></span><span class="op">(</span><span class="va">forecast_date</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>disease <span class="op">=</span> <span class="va">forecast_disease</span>, signal <span class="op">=</span> <span class="va">signal</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">geo_value</span>, <span class="va">source</span>, <span class="va">disease</span>, <span class="va">signal</span>, issue_date <span class="op">=</span> <span class="va">issue</span>, <span class="va">time_value</span>, <span class="va">value</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">geo_value</span>, <span class="va">source</span>, <span class="va">disease</span>, <span class="va">signal</span>, issue_date <span class="op">=</span> <span class="va">issue</span>, <span class="va">time_value</span>, <span class="va">value</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># convert to match hubverse</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"loc_data"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">target_data</span> <span class="op">&lt;-</span> <span class="va">target_data</span> <span class="op">%&gt;%</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>abbreviation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper</a></span><span class="op">(</span><span class="va">geo_value</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>target_end_date <span class="op">=</span> <span class="va">time_value</span> <span class="op">+</span> <span class="fl">6</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"wk inc "</span>, <span class="va">disease</span>, <span class="st">" hosp"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">loc_data</span> <span class="op">%&gt;%</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">abbreviation</span>, <span class="va">location</span>, <span class="va">location_name</span><span class="op">)</span>,</span>
+<span>                   by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abbreviation"</span> <span class="op">=</span> <span class="st">"abbreviation"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="va">target_end_date</span>, <span class="va">location_name</span><span class="op">)</span> <span class="op">%&gt;%</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">location</span>, <span class="va">abbreviation</span>, <span class="va">location_name</span>, <span class="va">target</span>, <span class="va">source</span>, <span class="va">disease</span>, <span class="va">signal</span>,</span>
+<span>                <span class="va">target_end_date</span>, <span class="va">issue_date</span>, observation <span class="op">=</span> <span class="va">value</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="check-the-data">Check the data<a class="anchor" aria-label="anchor" href="#check-the-data"></a>
 </h3>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">target_data</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">time_value</span>, y <span class="op">=</span> <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">target_data</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">target_end_date</span>, y <span class="op">=</span> <span class="va">observation</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper</a></span><span class="op">(</span><span class="va">geo_value</span><span class="op">)</span>, scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper</a></span><span class="op">(</span><span class="va">location_name</span><span class="op">)</span>, scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"NHSN Hospital Admissions"</span><span class="op">)</span>,</span>
 <span>       x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Weekly hospital admissions (n)"</span>,</span>
 <span>       alt <span class="op">=</span> <span class="st">"Line plot of weekly hospital admissions over time"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Warning: Removed 10 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">## (`geom_line()`).</span></span></code></pre>
 <p><img src="collect_empirical_data_files/figure-html/unnamed-chunk-3-1.png" alt="Line plot of weekly hospital admissions over time" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="save-it">Save it<a class="anchor" aria-label="anchor" href="#save-it"></a>
 </h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">write_csv</span><span class="op">(</span><span class="va">target_data</span>, file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"target-data"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"target-hospital-admissions-"</span>, <span class="va">forecast_date</span>, <span class="st">".csv"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
