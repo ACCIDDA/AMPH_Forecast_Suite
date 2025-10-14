@@ -152,33 +152,7 @@ dplyr::distinct(projection_data_tbl, model_id)
 ```
 
 
-
-# 5) Load target (observed) data (NO LONGER NEEDED)
-
-```{r read-target, eval=FALSE}
-
-# # If loading most recent data: 
-# target_path <- file.path(dir_path, "target-data", "time-series.csv")
-# target_data_all <- readr::read_csv(target_path, show_col_types = FALSE)
-
-
-# If loading from a specific date: 
-date_str <- format(as.Date(forecast_date), "%Y-%m-%d")
-target_filename <- paste0(date_str, "_flu_target_hospital_admissions_data.csv")
-
-target_path <- file.path(
-  dir_path,
-  "weekly-summaries",
-  date_str,
-  target_filename
-)
-
-target_data_all <- readr::read_csv(target_path, show_col_types = FALSE)
-
-
-```
-
-# 6) Pick location, start date, and uncertainty bands
+# 5) Pick location, start date, and uncertainty bands
 
 ```{r params}
 # Location can be "US" or a full state name (must match location_name in target_data)
@@ -191,7 +165,7 @@ uncertainty
 ```
 
 
-# 7) Build a simple equal-weight ensemble
+# 6) Build a simple equal-weight ensemble
 
 ```{r ensemble}
 # Filter submitted projections to the location of interest
@@ -221,7 +195,7 @@ unique(plot_df$model_id)
 
 
 
-# 8) Prepare data for visualization
+# 7) Prepare data for visualization
 
 ```{r viz-prep}
 
@@ -233,9 +207,9 @@ target_data_plot <- get_nhsn_data(
   forecast_date = new_target_data_date,
   save_data = TRUE
 )
-target_data_plot <- readr::read_csv(file.path("target-data", 
-                                              paste0("target-hospital-admissions-", new_target_data_date, ".csv")),
-                                    show_col_types = FALSE)
+target_data_plot <- readr::read_csv(
+  file.path("target-data", paste0("target-hospital-admissions-", new_target_data_date, ".csv")),
+  show_col_types = FALSE)
 
 # Forecasts to tidy plot
 proj_data <- hubUtils::as_model_out_tbl(plot_df) %>%
@@ -257,9 +231,9 @@ head(target_data_plot)
 
 
 
-# 9) Plot forecasts vs. truth
+# 8) Plot forecasts vs. truth
 
-```{r plot-opt1-hubvis, fig.width=9, fig.height=6}
+```{r plot-opt1-hubvis, fig.width=9, fig.height=6, fig.alt="Plot of forecasts vs. truth"}
 
 # This is having issues
 
@@ -277,11 +251,15 @@ hubVis::plot_step_ahead_model_output(
 ```
 
 
-```{r plot-opt2-ggplot, fig.width=9, fig.height=6}
+```{r plot-opt2-ggplot, fig.width=9, fig.height=6, fig.alt="Plot of forecasts vs. truth"}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(scales)
+
+# target_data_plot <- readr::read_csv(
+#   file.path("target-data", paste0("target-hospital-admissions-", new_target_data_date, ".csv")),
+#   show_col_types = FALSE)
 
 # Identify ensemble id from the object you created earlier
 ens_id <- unique(round_ens$model_id)[1]  # e.g., "hub-ensemble"
@@ -333,13 +311,13 @@ ggplot() +
     lineend = "round", alpha = 0.98, show.legend = TRUE
   ) +
   geom_point(
-    data = target_data,
+    data = target_data_plot,
     aes(x = date, y = observation),
     size = 1.2, alpha = 0.85, inherit.aes = FALSE,
     color = "grey50"
   ) +
   geom_line(
-    data = target_data,
+    data = target_data_plot,
     aes(x = date, y = observation),
     alpha = 0.85, inherit.aes = FALSE,
     color = "grey50"
@@ -350,6 +328,7 @@ ggplot() +
   labs(x = "Target date", y = "Weekly incident hospitalizations") +
   theme_minimal(base_size = 12) +
   theme(legend.position = "right")
+
 ```
 
 
@@ -370,7 +349,7 @@ scoring_target_data <- target_data_plot %>%
   epiprocess::as_epi_df(time_value = time_value)
 ```
 
-```{r scoring}
+```{r scoring, eval=FALSE}
 # Join forecasts with observations at (target_date, location)
 # and conform to scoringutils "forecast" structure.
 
