@@ -22,12 +22,24 @@ Imports:
     lubridate,
     tibble,
     purrr,
-    rlang
-Suggests:
-    hubData,
+    rlang,
+    remotes,
+    jsonlite,
+    viridisLite,
+    scales,
+    gitcreds,
+    ggplot2,
+    readr,
+    stringr,
+    hubData (>= 1.5.0.9000),
     hubUtils,
+    hubVis (>= 0.1.3.9000),
+    hubEnsembles,
+    scoringutils,
+    epipredict (>= 0.2.1),
+    epiprocess (>= 0.12.0.9999)
+Suggests:
     hubValidations,
-    hubVis,
     hubAdmin,
     hubEvals,
     fable,
@@ -37,11 +49,13 @@ Suggests:
     EpiEstim,
     EpiNow2,
     epidatr,
-    epipredict,
     epitools,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown
-URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite
+URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
+Remotes:  
+    hubverse-org,
+    cmu-delphi

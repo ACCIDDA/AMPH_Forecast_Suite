@@ -49,8 +49,9 @@ install_forecast_packages <- function(install_delphi = TRUE,
   # Hubverse packages
   if (install_hubverse) {
     message("Installing hubverse packages...")
-    hubverse_pkgs <- c("hubData", "hubUtils", "hubValidations", "hubVis", "hubAdmin","hubEnsembles",
-                       "hubVis", "hubEvals","scoringutils")
+    hubverse_pkgs <- c("hubData", "hubUtils", "hubVis", "hubEnsembles",
+                       "hubVis", "scoringutils")
+    # other packages: "hubAdmin", "hubEvals", "hubValidations",
 
     # Try to install from CRAN first, then from GitHub if not available
     for (pkg in hubverse_pkgs) {

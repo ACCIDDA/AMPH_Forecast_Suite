@@ -29,6 +29,7 @@ hubverse packages, fable, EpiEstim, EpiNow2, epidatr, and epiforecast.
 Useful links:
 \itemize{
   \item \url{https://github.com/ACCIDDA/AMPH_Forecast_Suite}
+  \item \url{https://accidda.github.io/AMPH_Forecast_Suite/}
   \item Report bugs at \url{https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues}
 }
 
