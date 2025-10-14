@@ -1,0 +1,13 @@
+pandoc: 3.1.11
+pkgdown: 2.1.3
+pkgdown_sha: ~
+articles:
+  collect_empirical_data: collect_empirical_data.html
+  convert_file_types: convert_file_types.html
+  getting-started: getting-started.html
+  times-series-models: times-series-models.html
+  utilizing-hub-output: utilizing-hub-output.html
+last_built: 2025-10-14T19:47Z
+urls:
+  reference: https://accidda.github.io/AMPH_Forecast_Suite/reference
+  article: https://accidda.github.io/AMPH_Forecast_Suite/articles
