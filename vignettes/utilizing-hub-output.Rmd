@@ -16,8 +16,11 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
 
 state_name <- "Maryland"
-used_locations <- "md"
+geo_ids <- "md"
 forecast_date <- as.Date("2024-11-30")
+forecast_disease <- "influenza"
+target <- "wk inc flu hosp"
+forecast_horizon_wks <- 0:3
 ```
 
 # 1) Setup
@@ -25,7 +28,7 @@ forecast_date <- as.Date("2024-11-30")
 Install & load required R packages
 
 ```{r packages}
-
+library(AMPHForecastSuite)
 library(hubEnsembles)
 library(hubUtils)
 library(hubVis)
@@ -44,135 +47,66 @@ library(scales)
 
 # 2) Get FluSight data repo
 
-The FluSight Github repository stores forecast data for the 2023-2024 FluSight collaborative exercise run by the US CDC. This project collects forecasts for weekly new hospitalizations due to confirmed influenza. More information can be found in the ReadMe of the repository: https://github.com/cdcepi/FluSight-forecast-hub
+The FluSight Github repository stores forecast data for the 2023-2024 FluSight collaborative exercise run by the US CDC. This project collects forecasts for weekly new hospitalizations due to confirmed influenza. More information can be found in the ReadMe of the repository: https://github.com/cdcepi/FluSight-forecast-hub.
 
+We will copy a set of forecasts from this repository, and use them to build a simple ensemble, visualize the forecasts, and score them against observed data.
 
 ```{r clone-repo}
+repo_dir <- clone_hub_repos(disease = forecast_disease,
+                            clone_dir = getwd())
+```
 
-# Ensure Git is available
-has_git <- tryCatch(
-  system2("git", "--version", stdout = TRUE, stderr = TRUE),
-  error = function(e) NA
+### Copy specific forecast round to the model-output folder
+
+We will copy forecasts from a set of models from FluSight. These include:
+# - FluSight-baseline
+# - MOBS-GLEAM_FLUH
+# - FluSight-ensemble
+
+
+```{r copy-round, eval=TRUE}
+# models from flusight
+models_to_copy <- c(
+  "FluSight-baseline",
+  "MOBS-GLEAM_FLUH",
+  "FluSight-ensemble"
 )
-if (any(is.na(has_git))) stop("Git does not appear to be installed or on PATH.")
+#models from AMPH
+models_created_in_AMPH <- list.dirs("model-output", full.names = FALSE, recursive = FALSE)
 
-repo_dir <- "FluSight-forecast-hub"
-
-# Clone into working directory if not present
-if (!dir.exists(repo_dir)) {
-  message("Cloning repository...")
-  status <- system2("git", c("clone", "https://github.com/cdcepi/FluSight-forecast-hub.git"),
-                    stdout = TRUE, stderr = TRUE)
-  cat(paste(status, collapse = "\n"), "\n")
-} else {
-  message("Repository exists. Pulling latest changes...")
-
-  # Check it's actually a git repo
-  is_repo <- tryCatch(
-    system2("git", c("-C", repo_dir, "rev-parse", "--is-inside-work-tree"),
-            stdout = TRUE, stderr = TRUE),
-    error = function(e) "false"
-  )
-
-  if (identical(trimws(is_repo), "true")) {
-    # Warn if there are local changes
-    dirty <- trimws(paste(system2("git", c("-C", repo_dir, "status", "--porcelain"),
-                                  stdout = TRUE), collapse = "\n"))
-    if (nchar(dirty) > 0) {
-      message("⚠️ Local changes detected in ", repo_dir, 
-              ". Pulling with --ff-only (won't overwrite local work).")
-    }
-
-    # Fetch and pull (fast-forward only)
-    fetch_out <- system2("git", c("-C", repo_dir, "fetch", "--prune"),
-                         stdout = TRUE, stderr = TRUE)
-    pull_out  <- system2("git", c("-C", repo_dir, "pull", "--ff-only", "--quiet"),
-                         stdout = TRUE, stderr = TRUE)
-
-    # Show any messages from Git
-    if (length(fetch_out)) cat(paste(fetch_out, collapse = "\n"), "\n")
-    if (length(pull_out))  cat(paste(pull_out,  collapse = "\n"), "\n")
-    message("Pull complete.")
-  } else {
-    stop(sprintf("Path '%s' exists but is not a Git repository.", repo_dir))
-  }
-}
-
-# Normalize path for downstream code
-dir_path <- normalizePath(repo_dir)
-message("Using dir_path: ", dir_path)
-
+# copy Forecast Hub forecasts to model-output folder
+copy_fch_outputs(repo_dir,
+                 forecast_date,
+                 models_to_copy)
 ```
 
 
-# 3) Choose forecast round (reference date)
-
-```{r choose-round}
-# Read submission (reference) dates from hub-config/tasks.json
-tasks_path <- file.path(dir_path, "hub-config", "tasks.json")
-tasks <- jsonlite::read_json(tasks_path)
-
-# Extract reference dates from the first round / first model task
-dates_archive <- unlist(tasks$rounds[[1]]$model_tasks[[1]]$task_ids$reference_date$optional)
-dates_archive <- as.Date(dates_archive)
-dates_archive <- dates_archive[dates_archive <= Sys.Date()]
-
-# ---- Set reference date of interest ----
-# Option 1: most recent submission date
-# curr_origin_date <- max(dates_archive, na.rm = TRUE)
-
-# Option 2: explicit date (must be one of the submission dates)
-curr_origin_date <- forecast_date
-
-# Option 3: pick by index (e.g., 12th date)
-# curr_origin_date <- dates_archive[12]
-
-if (!curr_origin_date %in% dates_archive) {
-  stop("Chosen curr_origin_date is not a valid submission date in the Hub.")
-}
-
-curr_origin_date
-```
-
-
-# 4) Load model output (submitted forecasts)
+# 4) Load model output (hub forecasts & your forecasts)
 
 ```{r read-forecasts}
-output_path <- file.path(dir_path, "model-output")
+output_path <- file.path("model-output")
 
 # Retrieve parquet/csv model output files and keep those matching the reference date
 file_paths <- list.files(output_path, pattern = "\\.(parquet|csv)$",
                          full.names = TRUE, recursive = TRUE)
-file_paths <- file_paths[grepl(curr_origin_date, file_paths)]
+file_paths <- file_paths[grepl(forecast_date, file_paths)]
 
 if (!length(file_paths)) {
-  stop("No model-output files found for curr_origin_date = ", curr_origin_date,
+  stop("No model-output files found for forecast_date = ", forecast_date,
        ". Try a different date.")
 }
 
-
-# helper that picks the right reader
-read_model_file <- function(path) {
-  if (grepl("\\.parquet(\\.gz)?$", path, ignore.case = TRUE)) {
-    # use arrow for parquet (handles both .parquet and .parquet.gz)
-    arrow::read_parquet(path)
-  } else if (grepl("\\.csv(\\.gz)?$", path, ignore.case = TRUE)) {
-    readr::read_csv(path, show_col_types = FALSE)
-  } else {
-    stop("Unrecognized file type: ", path)
-  }
-}
 
 # Read & bind; keep quantile forecasts; add model_id from folder name
 
 projection_data_all <- file_paths %>%
   purrr::map_dfr(function(.x) {
     df <- read_model_file(.x)
-
+    
     # standardize expected columns just in case
     if (!"output_type" %in% names(df))   stop("Missing 'output_type' in: ", .x)
     if (!"output_type_id" %in% names(df)) stop("Missing 'output_type_id' in: ", .x)
-
+    
     df %>%
       dplyr::filter(.data$output_type == "quantile") %>%
       dplyr::mutate(
@@ -183,39 +117,35 @@ projection_data_all <- file_paths %>%
 
 prep_proj_data <- projection_data_all %>%
   dplyr::mutate(
-    reference_date  = curr_origin_date,
+    reference_date  = forecast_date,
     target_end_date = dplyr::coalesce(target_end_date, reference_date + 7 * as.integer(horizon))
   ) %>%
-  dplyr::select(-model,-origin_date)
+  dplyr::select(-tidyselect::any_of(c("model", "origin_date")))
 
 # Convert to hubverse model_out_tbl format
 projection_data_tbl <- hubUtils::as_model_out_tbl(prep_proj_data) %>%
   dplyr::filter(model_id %in% c(
-    "FluSight-baseline",
-    "MOBS-GLEAM_FLUH",
-    "AMPH-SARIMA",
-    "AMPH-neuralnetwork",
-    "AMPH-epipredict-arx",
-    "AMPH-epipredict-climate",
-    "FluSight-ensemble"
+    models_created_in_AMPH,
+    models_to_copy
   ))
-  
-
 
 
 # Read and join location metadata (for names/abbreviations)
-loc_data <- readr::read_csv(file.path(dir_path, "auxiliary-data", "locations.csv"),
-                            show_col_types = FALSE)
+# loc_data <- readr::read_csv(file.path(dir_path, "auxiliary-data", "locations.csv"),
+#                             show_col_types = FALSE)
+data(loc_data, package = "AMPHForecastSuite")
 
 projection_data_tbl2 <- projection_data_tbl %>%
   dplyr::left_join(
     loc_data %>%
-      dplyr::select(location, location_name),
+        mutate(location = tolower(abbreviation)) %>%
+            dplyr::select(location, location_name) %>%
+      bind_rows(
+        loc_data %>%
+          dplyr::select(location, location_name)),
     by = "location"
   ) %>%
-  dplyr::mutate(location_name = dplyr::coalesce(location_name, location_id)) %>%
-  dplyr::select(-location, -location_id)
-
+  dplyr::mutate(location_name = dplyr::coalesce(location_name, location)) 
 
 dplyr::distinct(projection_data_tbl, model_id)
 
@@ -225,7 +155,7 @@ dplyr::distinct(projection_data_tbl, model_id)
 
 # 5) Load target (observed) data (NO LONGER NEEDED)
 
-```{r read-target}
+```{r read-target, eval=FALSE}
 
 # # If loading most recent data: 
 # target_path <- file.path(dir_path, "target-data", "time-series.csv")
@@ -233,7 +163,7 @@ dplyr::distinct(projection_data_tbl, model_id)
 
 
 # If loading from a specific date: 
-date_str <- format(as.Date(curr_origin_date), "%Y-%m-%d")
+date_str <- format(as.Date(forecast_date), "%Y-%m-%d")
 target_filename <- paste0(date_str, "_flu_target_hospital_admissions_data.csv")
 
 target_path <- file.path(
@@ -252,9 +182,9 @@ target_data_all <- readr::read_csv(target_path, show_col_types = FALSE)
 
 ```{r params}
 # Location can be "US" or a full state name (must match location_name in target_data)
-loc <- "Maryland"
-start_date <- as.Date("2024-09-01")
-# Middle 50% interval:
+loc <- state_name
+start_date <- lubridate::as_date(forecast_date) - lubridate::weeks(12)
+# Middle 80% interval:
 uncertainty <- c(0.1, 0.9)
 uncertainty
 
@@ -270,7 +200,7 @@ projection_data <- projection_data_tbl2 %>%
 
 # Keep only the chosen forecast round
 round_dat <- projection_data %>%
-  dplyr::filter(target == "wk inc flu hosp",
+  dplyr::filter(target == target,
                 output_type == "quantile",
                 horizon >= 0) %>%
   dplyr::collect()
@@ -294,6 +224,19 @@ unique(plot_df$model_id)
 # 8) Prepare data for visualization
 
 ```{r viz-prep}
+
+# pull updated target data
+new_target_data_date <- lubridate::as_date(forecast_date) + lubridate::weeks(5)
+target_data_plot <- get_nhsn_data(
+  disease = forecast_disease,
+  geo_values = geo_ids,
+  forecast_date = new_target_data_date,
+  save_data = TRUE
+)
+target_data_plot <- readr::read_csv(file.path("target-data", 
+                                              paste0("target-hospital-admissions-", new_target_data_date, ".csv")),
+                                    show_col_types = FALSE)
+
 # Forecasts to tidy plot
 proj_data <- hubUtils::as_model_out_tbl(plot_df) %>%
   dplyr::rename(target_date = target_end_date) %>%
@@ -301,15 +244,14 @@ proj_data <- hubUtils::as_model_out_tbl(plot_df) %>%
   dplyr::arrange(model_id, horizon, target_date, output_type_id) %>%
   dplyr::distinct(model_id, horizon, target_date, output_type_id, .keep_all = TRUE)
 
-
 # Observed data for the same location and time window
-target_data <- epidata_filter %>%
+target_data_plot <- target_data_plot %>%
   dplyr::filter(time_value > start_date) %>%
   dplyr::rename(observation = value,
                 date = time_value)
 
 head(proj_data)
-head(target_data)
+head(target_data_plot)
 
 ```
 
@@ -323,7 +265,7 @@ head(target_data)
 
 hubVis::plot_step_ahead_model_output(
   proj_data,
-  target_data,
+  target_data = target_data_plot,
   use_median_as_point = TRUE,
   show_legend = TRUE,
   intervals = 0.8,        
@@ -414,14 +356,18 @@ ggplot() +
 # 10) Score forecasts (WIS, coverage)
 
 ```{r scoring-prep}
-scoring_target_data <- epidata %>%
-  filter(signal == "confirmed_admissions_flu_ew",
-         geo_value %in% used_locations,
-         issue_date == curr_origin_date + 28,
+
+target_data_plot <- readr::read_csv(
+  file.path("target-data", paste0("target-hospital-admissions-", new_target_data_date, ".csv")),
+  show_col_types = FALSE)
+
+scoring_target_data <- target_data_plot %>%
+  filter(geo_value %in% geo_ids,
+         issue_date >= forecast_date + 28,
          time_value > "2022-09-01") %>%
-  select(geo_value, origin_date, value) %>%
+  select(geo_value, time_value, value) %>%
   drop_na(value) %>%
-  as_epi_df(time_value = origin_date)
+  epiprocess::as_epi_df(time_value = time_value)
 ```
 
 ```{r scoring}
@@ -432,7 +378,7 @@ scoring_df <- dplyr::left_join(
   proj_data,
   scoring_target_data %>%
     dplyr::rename(observation = value,
-                target_date = time_value) %>%
+                  target_date = time_value) %>%
     mutate(location_name = "Maryland") %>%
     select(-geo_value),
   by = c("target_date", "location_name"),

@@ -24,6 +24,7 @@
 #'                    reference_date = forecast_date + 6,
 #'                    horizon_time_steps = 0:3,
 #'                    geo_ids = "md")
+#'                    }
 #'
 #' @importFrom dplyr mutate select
 #' @importFrom magrittr `%>%`

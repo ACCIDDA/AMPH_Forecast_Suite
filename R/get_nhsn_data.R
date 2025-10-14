@@ -83,9 +83,6 @@ get_nhsn_data <- function(disease = "influenza",
   if (is.na(as.Date(forecast_date, format = "%Y-%m-%d"))) {
     stop("ERROR: Invalid forecast_date format. Use 'YYYY-MM-DD'.")
   }
-  if (weekdays(as.Date(forecast_date)) != "Sunday") {
-    stop("ERROR: forecast_date should be a Sunday.")
-  }
   if (as.Date(forecast_date) < as.Date("2020-10-01")) {
     stop("ERROR: forecast_date should be on or after 2020-10-01.")
   }

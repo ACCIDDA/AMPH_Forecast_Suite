@@ -1,5 +1,5 @@
 ---
-title: "AMPH 2025: Forecasting with Time Series Models"
+title: "AMPH 2025: Pull NHSN Hospitalization Data for Forecasting"
 output:
   html_document:
     toc: true
@@ -16,20 +16,17 @@ editor_options:
 state_name <- "Maryland"
 geo_ids <- "md"
 forecast_disease <- "influenza"
-forecast_date = "2025-10-12"
+forecast_date = "2024-11-30" #"2025-10-12"
 ```
 
-# Install packages
+# Load packages
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(AMPHForecastSuite)
-# Run `remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")` if the package is not installed.
-
 library(tidyverse)
 library(jsonlite)
-library(ggplot2)
 library(epidatr)
 library(epiprocess)
 ```
@@ -99,10 +96,15 @@ target_data <- target_data %>%
 
 ## Check the data 
 
-```{r}
+```{r fig.alt="Line plot of weekly hospital admissions over time"}
 ggplot(target_data, aes(x = time_value, y = value)) +
   geom_line() +
-  facet_wrap(~geo_value, scales = "free_y")
+  facet_wrap(~toupper(geo_value), scales = "free_y") +
+  labs(title = paste("NHSN Hospital Admissions"),
+       x = NULL,
+       y = "Weekly hospital admissions (n)",
+       alt = "Line plot of weekly hospital admissions over time") +
+  theme_bw()
 ```
 
 ## Save it

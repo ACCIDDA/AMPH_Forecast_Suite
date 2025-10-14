@@ -17,28 +17,22 @@ editor_options:
 ```{r set-params}
 state_name <- "Maryland"
 geo_ids <- "md"
-forecast_date <- as.Date("2025-10-12")
+forecast_date <- as.Date("2024-11-30")
 forecast_disease <- "influenza"
 target <- "wk inc flu hosp"
 forecast_horizon_wks <- 0:3
 ```
 
-## Install packages
+## Load packages
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(AMPHForecastSuite)
-# Run `remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")` if the package is not installed.
-
 library(tidyverse)
 library(forecast)
 library(jsonlite)
-library(ggplot2)
 library(epidatr)
-
-# Load packages
-# library(AMPHForecastSuite)
 library(epipredict)
 library(epiprocess)
 ```
@@ -60,7 +54,9 @@ target_data <- readr::read_csv(file = target_data_path)
 ```{r define-ref-date}
 # reference date is the saturday following the forecast date
 reference_date <- get_reference_date(forecast_date)
+```
 
+```{r include=FALSE}
 message("Reference date: ", reference_date)
 message("Forecast date: ", forecast_date)
 ```
@@ -79,6 +75,7 @@ Here we use the `auto.arima` function from the `forecast` package to fit a seaso
 model_name <- "AMPH-sarima"
 ```
 
+### Run the model
 ```{r sarima-model}
 
 fc_sarima <- forecast::auto.arima(target_data$value, 
@@ -132,7 +129,7 @@ Here we use the `nnetar` function from the `forecast` package to fit a neural ne
 model_name <- "AMPH-neuralnetwork"
 ```
 
-
+### Run the model
 ```{r neuralnet-model}
 
 fc_nnet <- forecast::nnetar(target_data$value, 
@@ -173,8 +170,8 @@ Here we use the `epipredict` package to fit an autoregressive model to the data.
 model_name <- "AMPH-epipredict-arx"
 ```
 
+### Run the model
 ```{r epipredict-arx-model}
-
 # Set up data for epipredict
 target_data_arx <- target_data %>%
   tsibble::as_tsibble(index = time_value, key = c(geo_value)) %>%
@@ -199,7 +196,10 @@ arx_forecast <- lapply(
     )
   }
 )
+```
 
+
+```{r fig.alt="ARX model fit and forecast", fig.cap="ARX model fit and forecast"}
 # pull out the workflow and the predictions to be able to effectively use autoplot
 arx_forecaster_workflow <- arx_forecast[[1]]$epi_workflow
 arx_forecaster_results <- arx_forecast %>%
@@ -213,7 +213,7 @@ autoplot(
   object = arx_forecaster_workflow,
   predictions = arx_forecaster_results,
   observed_response = target_data_arx %>%
-    filter(geo_value %in% geo_ids, time_value > "2025-06-01")) +
+    filter(geo_value %in% geo_ids, time_value > (lubridate::as_date(forecast_date) - 4*30))) +
   geom_vline(aes(xintercept = forecast_date))
 
 ```
@@ -232,7 +232,8 @@ data_fc_arx_epipred <- trans_epipredarx_hv(fc_output = arx_forecast,
 ## Save data file
 #' -- this will have validation build in for fluid workflow eventually.
 save_model_output(model_name = model_name,
-                  fc_output = data_fc_arx_epipred)
+                  fc_output = data_fc_arx_epipred,
+                  forecast_date)
 
 ```
 
@@ -247,7 +248,7 @@ Here we use the `epipredict` package to fit a climatological model to the data. 
 model_name <- "AMPH-epipredict-climate"
 ```
 
-
+### Run the model
 ```{r epipredict-climate-model}
 # Set up data for epipredict
 target_data_clim <- target_data %>%
@@ -275,13 +276,17 @@ climate_forecast_workflow <- climate_forecast$epi_workflow
 climate_forecast_results <- climate_forecast$predictions %>%
   mutate(horizon = forecast_horizon_wks,
          location_id = state_name,
-         model = mod_name,
+         model = model_name,
          target = target)
+```
+
+
+```{r fig.alt="Climate model fit and forecast", fig.cap="Climate model fit and forecast"}
 autoplot(
   object = climate_forecast_workflow,
   predictions = climate_forecast_results,
   observed_response = target_data_clim %>%
-    filter(geo_value %in% geo_ids, time_value > "2025-06-01")) +
+    filter(geo_value %in% geo_ids, time_value > (lubridate::as_date(forecast_date) - 4*30))) +
   geom_vline(aes(xintercept = forecast_date))
 ```
 
@@ -298,6 +303,7 @@ hub_forecast <- trans_epipredclim_hv(fc_output = climate_forecast,
 
 ## Save data file
 #' -- this will have validation build in for fluid workflow eventually.
-save_model_output(model_name = mod_name,
-                  fc_output = data_fc_arx_epipred)
+save_model_output(model_name = model_name,
+                  fc_output = data_fc_arx_epipred,
+                  forecast_date)
 ```

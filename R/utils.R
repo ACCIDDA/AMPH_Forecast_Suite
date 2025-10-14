@@ -38,3 +38,43 @@ get_reference_date <- function(forecast_date) {
   d + ahead
 }
 
+
+
+
+
+
+
+
+
+
+#' Read model file helper
+#'
+#' helper that picks the right reader
+#' supports .parquet, .parquet.gz, .csv, .csv.gz
+#'
+#' @param path character(1) path to file
+#'
+#' @importFrom arrow read_parquet
+#' @importFrom readr read_csv
+#'
+#' @returns NULL
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' read_model_file("path/to/file.parquet")
+#' read_model_file("path/to/file.csv.gz")
+#' }
+#'
+read_model_file <- function(path) {
+  if (grepl("\\.parquet(\\.gz)?$", path, ignore.case = TRUE)) {
+    # use arrow for parquet (handles both .parquet and .parquet.gz)
+    arrow::read_parquet(path)
+  } else if (grepl("\\.csv(\\.gz)?$", path, ignore.case = TRUE)) {
+    readr::read_csv(path, show_col_types = FALSE)
+  } else {
+    stop("Unrecognized file type: ", path)
+  }
+}
+
+
