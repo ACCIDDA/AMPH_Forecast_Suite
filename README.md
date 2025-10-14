@@ -7,8 +7,15 @@ Suite of tools and helper functions to build and run an infectious disease forec
 The AMPH Forecast Suite is an R package that provides a comprehensive toolkit for building infectious disease forecasting pipelines and hubs. It streamlines the process of working with multiple forecasting packages by:
 
 - Installing and managing dependencies for key forecasting packages
+- Setting up appropriate directory structure
+- Pulling and manipulating data to use with forecasting models
 - Providing helper functions to translate data between different package formats
-- Facilitating integration with hubverse, fable, EpiEstim, EpiNow2, epidatr, and epiforecast packages
+- Running forecasts using multiple packages
+- Ensembling, visualizing, and evaluating forecasts
+- Producing outputs compatible with forecast hubs and evaluation tools
+
+For more information, see the package documentation and function help pages.
+
 
 ## Installation
 
@@ -21,8 +28,6 @@ install.packages("remotes")
 # Install AMPH Forecast Suite
 remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")
 ```
-
-## Usage
 
 ### Install Packages and Build Directory Structure
 
@@ -45,50 +50,7 @@ install_forecast_packages(
 ```
 
 
-## Summary
-
-The AMPH Forecast Suite simplifies the process of:
-
-1. Installing necessary packages
-2. Setting up appropriate directory structure
-3. Pulling and manipulating data to use with forecasting models
-4. Running forecasts using multiple packages
-5. Ensembling, visualizing, and evaluating forecasts
-
-For more information, see the package documentation and function help pages.
-
-
-
-## Available Functions
-
-### Package Installation
-- `install_forecast_packages()`: Install all required forecasting packages
-
-### Data Conversion Functions
-
-#### Fable/tsibble Converters
-- `convert_hub_to_tsibble()`: Convert hub format to tsibble
-- `convert_hub_to_fable()`: Convert hub format for fable modeling
-- `convert_fable_to_hub()`: Convert fable forecasts to hub format
-- `convert_tsibble_to_hub()`: Convert tsibble back to hub format
-
-#### EpiEstim Converters
-- `convert_hub_to_epiestim()`: Convert hub format to EpiEstim format
-- `convert_epiestim_to_hub()`: Convert EpiEstim results to hub format
-
-#### EpiNow2 Converters
-- `convert_hub_to_epinow2()`: Convert hub format to EpiNow2 format
-- `convert_epinow2_to_hub()`: Convert EpiNow2 results to hub format
-
-    
-
-### Additional Resources
-
-- **hubEvals Documentation**: [https://hubverse-org.github.io/hubEvals/](https://hubverse-org.github.io/hubEvals/)
-- **WIS Scoring Function**: [score_wis() reference](https://hubverse-org.github.io/hubEvals/reference/score_wis.html)
-- **Data Format Requirements**: [Formatting data for hubEvals](https://hubverse-org.github.io/hubEvals/articles/format-data.html)
-
-## Package Dependencies
+## Packages for Infectious Disease Forecasting
 
 The package helps you install and work with:
 
@@ -103,6 +65,7 @@ The package helps you install and work with:
 - fable: Forecasting models for tidy time series
 - fabletools: Tools for working with fable models
 - feasts: Feature extraction and statistics for time series
+- epiforecast: Tools for infectious disease forecasting
 - tsibble: Tidy temporal data frames
 
 ### Epidemiological Packages
@@ -112,6 +75,16 @@ The package helps you install and work with:
 
 ### Data Access
 - epidatr: Access epidemiological data from various sources
+
+
+
+## Additional Resources
+
+- **hubEvals Documentation**: [https://hubverse-org.github.io/hubEvals/](https://hubverse-org.github.io/hubEvals/)
+- **WIS Scoring Function**: [score_wis() reference](https://hubverse-org.github.io/hubEvals/reference/score_wis.html)
+- **Data Format Requirements**: [Formatting data for hubEvals](https://hubverse-org.github.io/hubEvals/articles/format-data.html)
+
+
 
 ## Contributing
 
