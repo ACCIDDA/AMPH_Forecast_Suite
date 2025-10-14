@@ -45,9 +45,6 @@ Imports:
     epipredict (>= 0.2.1),
     epiprocess (>= 0.12.0.9999)
 Suggests:
-    hubValidations,
-    hubAdmin,
-    hubEvals,
     fable,
     fabletools,
     feasts,
