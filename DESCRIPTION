@@ -15,19 +15,30 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 3.5.0)
+    gitcreds,
+    jsonlite,
+    R (>= 3.5.0),
+    remotes,
+    scales,
+    tidyverse,
+    viridisLite
 Imports:
     dplyr,
     tidyr,
     lubridate,
     tibble,
     purrr,
-    rlang
-Suggests:
+    rlang,
+    ggplot2,
+    readr,
+    stringr,
     hubData,
     hubUtils,
-    hubValidations,
     hubVis,
+    hubEnsembles,
+    scoringutils
+Suggests:
+    hubValidations,
     hubAdmin,
     hubEvals,
     fable,
