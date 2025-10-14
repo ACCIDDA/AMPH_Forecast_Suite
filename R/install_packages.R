@@ -73,7 +73,7 @@ install_forecast_packages <- function(install_delphi = TRUE,
   # Forecasting packages (fable ecosystem)
   if (install_forecasting) {
     message("Installing forecasting packages...")
-    forecasting_pkgs <- c("fable", "fabletools", "feasts", "tsibble", "tsibbledata", "forecast")
+    forecasting_pkgs <- c("fable", "fabletools", "tsibble", "tsibbledata", "forecast")
 
     for (pkg in forecasting_pkgs) {
       if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -119,7 +119,7 @@ install_forecast_packages <- function(install_delphi = TRUE,
   # Data access packages
   if (install_data) {
     message("Installing data access packages...")
-    data_pkgs <- c("epidatr")
+    data_pkgs <- c("epidatr","epiprocess")
 
     for (pkg in data_pkgs) {
       if (!requireNamespace(pkg, quietly = TRUE)) {

@@ -47,19 +47,17 @@ Imports:
 Suggests:
     fable,
     fabletools,
-    feasts,
     tsibble,
-    EpiEstim,
-    EpiNow2,
     epidatr,
     epitools,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    forecast
 URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
-Remotes:  
+Remotes: 
     hubverse-org/hubData,
     hubverse-org/hubVis,
     cmu-delphi/epiprocess,

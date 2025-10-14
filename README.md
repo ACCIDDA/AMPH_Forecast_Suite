@@ -24,7 +24,7 @@ remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")
 
 ## Usage
 
-### 1. Install Packages and Build Directory Structure
+### Install Packages and Build Directory Structure
 
 The package includes a function to install all required packages and set up a directory structure for your forecasting project.
 
@@ -52,17 +52,11 @@ The AMPH Forecast Suite simplifies the process of:
 1. Installing necessary packages
 2. Setting up appropriate directory structure
 3. Pulling and manipulating data to use with forecasting models
-4. Ensembling, visualizing, and evaluating forecasts
+4. Running forecasts using multiple packages
+5. Ensembling, visualizing, and evaluating forecasts
 
 For more information, see the package documentation and function help pages.
 
-
-
-
-
-## Other key functionality
-
-### 1. Forecasting workflow quick set up
 
 
 ## Available Functions
@@ -86,61 +80,7 @@ For more information, see the package documentation and function help pages.
 - `convert_hub_to_epinow2()`: Convert hub format to EpiNow2 format
 - `convert_epinow2_to_hub()`: Convert EpiNow2 results to hub format
 
-## Forecast Evaluation with hubEvals
-
-The package supports integration with [hubEvals](https://hubverse-org.github.io/hubEvals/) for evaluating forecast performance using the Weighted Interval Score (WIS) and other proper scoring rules.
-
-### WIS Evaluation Example
-
-The Weighted Interval Score (WIS) is a proper scoring rule that evaluates both the calibration and sharpness of probabilistic forecasts. It rewards forecasts that place high probability on observed outcomes while penalizing overly wide prediction intervals.
-
-```r
-library(AMPHForecastSuite)
-library(hubEvals)
-
-# After generating forecasts with fable, EpiEstim, or EpiNow2
-# and converting them to hub format...
-
-# 1. Create or load truth/observation data
-truth_data <- data.frame(
-  location = "US",
-  target_end_date = seq.Date(as.Date("2023-04-09"), by = "week", length.out = 4),
-  observation = c(850, 920, 780, 810)
-)
-
-# 2. Prepare model output in hub quantile format
-# Your hub_forecasts should have columns: model_id, location, 
-# target_end_date, output_type, output_type_id, value
-model_output <- hub_forecasts  # From convert_fable_to_hub() or similar
-
-# 3. Calculate WIS scores
-wis_scores <- score_wis(
-  model_out_tbl = model_output,
-  target_observations = truth_data,
-  output_type = "quantile",
-  output_type_id = c(0.025, 0.25, 0.5, 0.75, 0.975)
-)
-
-# View scores
-print(wis_scores)
-```
-
-### Key Features of WIS Evaluation
-
-- **Proper Scoring Rule**: WIS is a strictly proper scoring rule, meaning forecasters are incentivized to report their true probabilistic beliefs
-- **Calibration & Sharpness**: Evaluates both how well prediction intervals contain observations and how precise those intervals are
-- **Lower is Better**: Lower WIS values indicate better forecast performance
-- **Quantile-Based**: Works with quantile forecasts commonly produced by epidemiological models
-
-### Complete Pipeline Example
-
-A full working example demonstrating WIS evaluation of forecasts from fable, EpiEstim, and EpiNow2 is available in:
-
-```r
-# View the complete example
-system.file("examples", "forecasting_pipeline_example.R", 
-            package = "AMPHForecastSuite")
-```
+    
 
 ### Additional Resources
 
