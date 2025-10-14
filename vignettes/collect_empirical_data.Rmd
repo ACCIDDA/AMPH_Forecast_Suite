@@ -1,5 +1,5 @@
 ---
-title: "1. Collect Empirical Data for Forecasting"
+title: "2. Collect Empirical Data for Forecasting"
 subtitle: "Using NHSN Hospitalization Data"
 output:
   html_document:

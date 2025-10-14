@@ -88,7 +88,7 @@ fc_sarima <- forecast::auto.arima(y = target_data$observation,
                                   seasonal = T, 
                                   lambda = "auto") %>%
   forecast::forecast(h = length(forecast_horizon_wks),
-                     level = c(.1, .2, .3, .4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
+           level = c(.1, .2, .3, .4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
 ```
 
@@ -105,11 +105,11 @@ We use the `hubValidations` package to check against the `tasks.json` file we cr
 
 # Transform to hubVerse format
 data_fc_sarima <- trans_forecastpkg_hv(fc_output = fc_sarima,
-                                       model_name = model_name,
-                                       target = target,
-                                       reference_date = reference_date,
-                                       horizon_time_steps = forecast_horizon_wks,
-                                       geo_ids = location)
+                                     model_name = model_name,
+                                     target = target,
+                                     reference_date = reference_date,
+                                     horizon_time_steps = forecast_horizon_wks,
+                                     geo_ids = location)
 
 
 ## Save data file
@@ -272,7 +272,7 @@ climate_forecast <- epipredict::climatological_forecaster(
   args_list = climate_args_list(
     forecast_horizon = forecast_horizon_wks,
     time_type = "week",
-    quantile_levels = c(0.01, 0.025, seq(.05, .95, .05), 0.975, 0.99),
+        quantile_levels = c(0.01, 0.025, seq(.05, .95, .05), 0.975, 0.99),
     center_method = "mean",
     quantile_by_key = "geo_value",
     forecast_date = reference_date,
