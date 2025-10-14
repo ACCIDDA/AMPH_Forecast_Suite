@@ -42,6 +42,6 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown
-URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite
+URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
