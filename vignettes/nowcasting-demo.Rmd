@@ -1,0 +1,108 @@
+---
+title: "AMPH 2025: Forecasting with Time Series Models"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+# Set parameters
+
+```{r set-params}
+state_name <- "Maryland"
+geo_values <- "md"
+forecast_disease <- "influenza"
+forecast_date = "2025-10-12"
+
+```
+
+# Install packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(AMPHForecastSuite)
+install.packages("epinowcast", repos = "https://epinowcast.r-universe.dev")
+install_github("epinowcast/baselinenowcast")
+library(baselinenowcast)
+
+# Run `remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")` if the package is not installed.
+
+library(tidyverse)
+library(jsonlite)
+library(ggplot2)
+library(epidatr)
+library(epiprocess)
+```
+
+
+# Save and check API key
+
+1. Go to https://api.delphi.cmu.edu/epidata/admin/registration_form and register for a psuedo-anonymous account.
+
+2. Run the command below to save your API key in your `.Renviron` file. As it says in the prompt, add a line `DELPHI_EPIDATA_KEY=yourkeyhere` to your `.Renviron` file. Save and close the file, then restart R or RStudio. After restarting, run the command `epidatr::get_api_key()` to check that your API key is saved.
+
+```{r epidatr_api, eval=FALSE}
+
+# Follow instructions about opening `.Renviron` file
+#epidatr::save_api_key()
+
+# Check that the API key is saved
+epidatr::get_api_key()
+
+```
+
+# Pull directly with epidatr
+
+```{r}
+
+  # Map disease names to NHSN signal names
+  # Based on epidatr NHSN signals for respiratory diseases
+  signal_map <- list(
+    "influenza" = "confirmed_admissions_flu_ew",
+    "covid" = "confirmed_admissions_covid_ew",
+    "rsv" = "confirmed_admissions_rsv_ew"
+  )
+  signal <- signal_map[[forecast_disease]]
+
+  # Call epidatr to get the data
+  epidata <- epidatr::pub_covidcast(
+    source = "nhsn",
+    signals = signal,
+    geo_type = "state",
+    time_type = "week",
+    geo_values = tolower(geo_values),
+    issues = "*"
+  )
+
+
+  epidata_archive <- epidata %>%
+    select(geo_value, time_value, version = issue, value) %>%
+     as_epi_archive(compactify=TRUE) # compactifiy remove small (or equal revision)
+
+```
+
+
+```{r}
+
+revision_data <- revision_summary(epidata_archive, print_inform = FALSE)
+head(revision_data)
+```
+
+
+## Check the data 
+
+```{r}
+ggplot(epidata_filter, aes(x = time_value, y = value)) +
+  geom_line() +
+  facet_wrap(~geo_value, scales = "free_y")
+```
+
+## Save it
+
+```{r}
+write_csv(epidata_filter, file = "target-data/target-hospital-admissions.csv")
