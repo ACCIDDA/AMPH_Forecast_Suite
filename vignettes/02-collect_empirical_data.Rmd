@@ -22,7 +22,7 @@ forecast_date = "2024-12-01" #"2025-10-12" # Sunday
 
 # Load packages
 
-```{r setup, include=FALSE}
+```{r setup, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(AMPHForecastSuite)

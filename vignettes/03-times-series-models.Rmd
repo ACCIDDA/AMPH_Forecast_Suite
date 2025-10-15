@@ -25,7 +25,7 @@ forecast_horizon_wks <- 0:3
 
 ## Load packages
 
-```{r setup, include=FALSE}
+```{r setup, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(AMPHForecastSuite)
@@ -41,7 +41,7 @@ library(epiprocess)
 
 We already pulled and saved the data we need in `Collect Empirical Data`. See `vignettes/collect_empirical_data.Rmd` for details.
 
-```{r read-target}
+```{r read-target, message=FALSE, warning=FALSE}
 
 # Load data saved from a specific forecast date: 
 target_data_path <- file.path("target-data", paste0("target-hospital-admissions-", forecast_date, ".csv"))
@@ -160,7 +160,6 @@ save_model_output(model_name = model_name,
                   fc_output = data_fc_nnet,
                   reference_date)
 
-unique(data_fc_nnet$output_type_id)
 ```
 
 
