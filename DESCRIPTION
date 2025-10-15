@@ -17,7 +17,6 @@ RoxygenNote: 7.3.2
 Depends: 
     gitcreds,
     jsonlite,
-    learnr,
     R (>= 3.5.0),
     remotes,
     scales,
@@ -51,6 +50,7 @@ Imports:
     plotly,
     patchwork
 Suggests:
+    learnr,
     fable,
     fabletools,
     tsibble,
