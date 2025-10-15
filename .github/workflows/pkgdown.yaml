@@ -36,7 +36,7 @@ jobs:
           extra-packages: any::pkgdown, local::.
           needs: website
           dependencies: '"all"'
-          repositories: |
+          extra-repositories: |
             https://epinowcast.r-universe.dev
             https://cloud.r-project.org
 
