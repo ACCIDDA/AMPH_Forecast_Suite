@@ -1,0 +1,132 @@
+---
+title: "2. Collect Empirical Data for Forecasting"
+subtitle: "Using NHSN Hospitalization Data"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+# Set parameters
+
+```{r set-params}
+state_name <- "Maryland"
+geo_ids <- "md"
+forecast_disease <- "influenza"
+forecast_date = "2024-12-01" #"2025-10-12" # Sunday
+```
+
+# Load packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(AMPHForecastSuite)
+library(tidyverse)
+library(jsonlite)
+library(epidatr)
+library(epiprocess)
+```
+
+
+# Save and check API key
+
+1. Go to https://api.delphi.cmu.edu/epidata/admin/registration_form and register for a psuedo-anonymous account.
+
+2. Run the command below to save your API key in your `.Renviron` file. As it says in the prompt, add a line `DELPHI_EPIDATA_KEY=yourkeyhere` to your `.Renviron` file. Save and close the file, then restart R or RStudio. After restarting, run the command `epidatr::get_api_key()` to check that your API key is saved.
+
+```{r epidatr_api, eval=FALSE}
+
+# Follow instructions about opening `.Renviron` file
+epidatr::save_api_key()
+
+# Check that the API key is saved
+epidatr::get_api_key()
+
+```
+
+
+# Pull NHSN hospitalization data
+
+```{r}
+
+target_data <- get_nhsn_data(
+  disease = forecast_disease, #"influenza"  or "rsv" or "covid"
+  geo_values = geo_ids,
+  forecast_date = forecast_date,
+  save_data = TRUE
+)
+
+```
+
+# Or pull directly with epidatr
+
+Note: To pull data directly that pertains to a previous forecast date, you need to filter by issue date. The code below is not set up to do that, so it will pull the most recent data. To pull data as of a previous forecast date, use the `get_nhsn_data()` function above.
+
+```{r, eval = FALSE}
+
+# Map disease names to NHSN signal names
+# Based on epidatr NHSN signals for respiratory diseases
+signal_map <- list(
+  "influenza" = "confirmed_admissions_flu_ew",
+  "covid" = "confirmed_admissions_covid_ew",
+  "rsv" = "confirmed_admissions_rsv_ew"
+)
+signal <- signal_map[[forecast_disease]]
+
+# Call epidatr to get the data
+target_data <- epidatr::pub_covidcast(
+  source = "nhsn",
+  signals = signal,
+  geo_type = "state",
+  time_type = "week",
+  geo_values = tolower(geo_ids)
+)
+
+target_data <- target_data %>%
+  dplyr::filter(time_value >= lubridate::as_date("2020-09-01"),
+                time_value < lubridate::as_date(forecast_date)) %>%
+  dplyr::mutate(disease = forecast_disease, signal = signal) %>%
+  dplyr::select(geo_value, source, disease, signal, issue_date = issue, time_value, value)
+
+# convert to match hubverse
+
+data("loc_data")
+
+target_data <- target_data %>%
+  dplyr::mutate(abbreviation = toupper(geo_value)) %>%
+  dplyr::mutate(target_end_date = time_value + 6) %>%
+  dplyr::mutate(target = paste0("wk inc ", disease, " hosp")) %>%
+  dplyr::left_join(loc_data %>% dplyr::select(abbreviation, location, location_name),
+                   by = c("abbreviation" = "abbreviation")) %>%
+  dplyr::arrange(target_end_date, location_name) %>%
+  dplyr::select(location, abbreviation, location_name, target, source, disease, signal,
+                target_end_date, issue_date, observation = value)
+
+
+
+```
+
+## Check the data 
+
+```{r fig.alt="Line plot of weekly hospital admissions over time", warning=FALSE, message=FALSE}
+ggplot(target_data, aes(x = target_end_date, y = observation)) +
+  geom_line() +
+  facet_wrap(~toupper(location_name), scales = "free_y") +
+  labs(title = paste("NHSN Hospital Admissions"),
+       x = NULL,
+       y = "Weekly hospital admissions (n)",
+       alt = "Line plot of weekly hospital admissions over time") +
+  theme_bw()
+```
+
+## Save it
+
+```{r}
+write_csv(target_data, file = file.path("target-data", paste0("target-hospital-admissions-", forecast_date, ".csv")))
+
+```

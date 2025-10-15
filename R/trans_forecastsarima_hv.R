@@ -65,7 +65,7 @@ trans_forecastpkg_hv <- function(fc_output = fc_sarima,
       value = as.numeric(value),
       output_type = "quantile",
       reference_date = lubridate::as_date(reference_date)) %>%
-    dplyr::mutate(target_end_date = lubridate::as_date(reference_date) + (horizon * 7) + 6) %>%
+    dplyr::mutate(target_end_date = lubridate::as_date(reference_date) + (horizon * 7)) %>%
     dplyr::select(target_end_date, reference_date, target, horizon, location, model,
                   output_type, output_type_id, value) %>%
     dplyr::arrange(location, model, target, horizon, output_type_id)

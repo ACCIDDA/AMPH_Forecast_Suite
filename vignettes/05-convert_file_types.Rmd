@@ -1,9 +1,15 @@
 ---
-title: "Converting File Types"
-author: "Shaun Truelove"
-date: "2025-10-12"
-output: html_document
+title: "Other: Converting File Types"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+editor_options:
+  chunk_output_type: console
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

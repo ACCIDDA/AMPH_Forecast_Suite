@@ -20,39 +20,45 @@ Depends:
     R (>= 3.5.0),
     remotes,
     scales,
-    tidyverse,
-    viridisLite
+    tidyverse
 Imports:
+    viridisLite,
     dplyr,
     tidyr,
     lubridate,
     tibble,
     purrr,
     rlang,
+    remotes,
+    jsonlite,
+    viridisLite,
+    scales,
+    gitcreds,
     ggplot2,
     readr,
     stringr,
-    hubData,
+    hubData (>= 1.5.0.9000),
     hubUtils,
-    hubVis,
+    hubVis (>= 0.1.3.9000),
     hubEnsembles,
-    scoringutils
+    scoringutils,
+    epipredict (>= 0.2.1),
+    epiprocess (>= 0.12.0.9999)
 Suggests:
-    hubValidations,
-    hubAdmin,
-    hubEvals,
     fable,
     fabletools,
-    feasts,
     tsibble,
-    EpiEstim,
-    EpiNow2,
     epidatr,
-    epipredict,
     epitools,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    forecast
 URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
+Remotes: 
+    hubverse-org/hubData,
+    hubverse-org/hubVis,
+    cmu-delphi/epiprocess,
+    cmu-delphi/epipredict

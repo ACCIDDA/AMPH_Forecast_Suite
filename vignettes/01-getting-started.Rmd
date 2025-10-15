@@ -1,5 +1,5 @@
 ---
-title: "Getting Started with AMPH Forecast Suite"
+title: "1. Getting Started with AMPH Forecast Suite"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Getting Started with AMPH Forecast Suite}
@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-The AMPH Forecast Suite provides a comprehensive toolkit for building infectious disease forecasting pipelines and hubs. This vignette demonstrates the basic workflow for using the package.
+The AMPH Forecast Suite provides a comprehensive toolkit for building infectious disease forecasting pipelines and hubs. This vignette demonstrates the basic workflow for using this package. This package and suite are still under active development, and we welcome contributions and feedback from the community.
+
 
 ## Installation
 
@@ -25,8 +26,6 @@ First, ensure you have R (version 4.0 or higher) and RStudio installed.
 ```{r}
 # Check R version
 R.Version()$version.string
-# Check RStudio version
-# RStudio.Version()$version
 ```
 
 Next, set your git credentials, if you have not already done this.
@@ -85,41 +84,15 @@ setup_file_structure(project_dir = "My_Forecast_Project")
 
 
 
-## Building a Complete Pipeline
+## Next steps
 
-Here's an example of a complete forecasting pipeline:
+1. Define the forecasting effort:
+  - Determine forecasting disease and targets
+  - Identify data sources and geographies
+2. Pull and manipulating data to use with forecasting models
+3. Run forecasting models
+4. Ensemble, visualize, and evaluate forecasts
+5. Share forecasts with stakeholders
 
-```{r eval=FALSE}
-# 1. Load data in hub format
-hub_data <- load_hub_data()  # Your data loading function
-
-# 2. Generate forecasts with multiple methods
-# Method 1: Fable
-ts_data <- convert_hub_to_tsibble(hub_data)
-fable_model <- ts_data %>% model(ARIMA(value))
-fable_fc <- fable_model %>% forecast(h = 4)
-fable_hub_fc <- convert_fable_to_hub(fable_fc, location = "US")
-
-# Method 2: EpiEstim for R estimates
-epiestim_data <- convert_hub_to_epiestim(hub_data, location_filter = "US")
-r_estimates <- estimate_R(epiestim_data, method = "parametric_si",
-                          config = make_config(list(mean_si = 7, std_si = 4.5)))
-r_hub <- convert_epiestim_to_hub(r_estimates, location = "US")
-
-# 3. Combine forecasts
-all_forecasts <- rbind(fable_hub_fc, r_hub)
-
-# 4. Submit to hub
-# submit_to_hub(all_forecasts)  # Your submission function
-```
-
-## Summary
-
-The AMPH Forecast Suite simplifies the process of:
-
-1. Installing necessary packages
-2. Setting up appropriate directory structure
-3. Pulling and manipulating data to use with forecasting models
-4. Ensembling, visualizing, and evaluating forecasts
 
 For more information, see the package documentation and function help pages.
