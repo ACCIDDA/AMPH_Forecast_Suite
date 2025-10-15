@@ -328,7 +328,8 @@ To see larger adjustments, experiment with other locations, earlier nowcast date
   [baselinenowcast vignette](https://baselinenowcast.epinowcast.org/articles/baselinenowcast.html)
   for stratified data or alternative delay models.
 
-##More ressources:
+## More ressources:
+
 - Paulo Ventura's archived NHSN exports: <https://paulocv.github.io/respiratory_archive/>
 - `baselinenowcast` getting started guide: <https://baselinenowcast.epinowcast.org/articles/baselinenowcast.html> (and the accompanying paper: <https://www.medrxiv.org/content/10.1101/2025.08.14.25333653v2>)
 - `epinowcast` introduction for principled hierarchical nowcasting models: <https://package.epinowcast.org/articles/epinowcast.html>
