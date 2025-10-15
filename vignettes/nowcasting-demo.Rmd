@@ -303,4 +303,13 @@ As you observe, this example is disappointing, as our nowcast is very close to t
 
 Indeed, nowcasting is beneficial with a longer history of data (unfortnuataly epidata does not store NHSN issues before 2024-11-17), better nowcasting nodels.
 
-If you would like to explore nowcasting further, we suggest using a dataset 
+If you would like to explore nowcasting further, we suggest using a dataset such as the daily level data from the Robert Koch Institute via the Germany Nowcasting hub already included in these packages
+
+More ressources:
+* Paulo Ventura archive of NHSN data: https://paulocv.github.io/respiratory_archive/
+* https://baselinenowcast.epinowcast.org/articles/baselinenowcast.html baselinenowcast gettings started gude (and the attached publciation https://www.medrxiv.org/content/10.1101/2025.08.14.25333653v2)
+* https://package.epinowcast.org/articles/epinowcast.html epinowcast get started for more realistic and principled models
+* the two first slide deck fo delfphi insight net workshop 2024 https://cmu-delphi.github.io/insightnet-workshop-2024
+* the two nowcast chapter of NFIDD SISMID course (https://nfidd.github.io/sismid/): one one simple nowcasting using delay distribution, the other making a manual joint model
+* This paper by lison et al: https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012021 which go through the state of the art.
+
