@@ -20,7 +20,7 @@ We will nowcast the confirmed hospital admission for influenza in Maryland. We s
 
 ```{r set-params}
 state_name <- "Maryland"
-geo_values <- "md"
+geo_values <- "or"
 forecast_disease <- "influenza"
 nowcast_date = "2025-02-10"
 eval_date = "2025-03-21"
@@ -241,7 +241,6 @@ delay_pmf_plot
 ```
 ## Apply the delay to generate a point nowcast
 
-
 ``` {r}
 point_nowcast_matrix <- apply_delay(
   reporting_triangle = reporting_triangle,
@@ -300,30 +299,8 @@ plot_pt_nowcast <- ggplot(plot_data, aes(
 plot_pt_nowcast
 ```
 
+As you observe, this example is disappointing, as our nowcast is very close to the data available at that time. and when you look at the PMF above, that makes sense (note that there could also be an weeoe on our part).
 
-``` {r}
+Indeed, nowcasting is beneficial with a longer history of data (unfortnuataly epidata does not store NHSN issues before 2024-11-17), better nowcasting nodels.
 
-```
-
-``` {r}
-# For uncertainty estimation, we will generate retrospective nowcast datasets with the most recent 50% of the reference times.
-n_retrospective_nowcasts <- as.integer(0.5 * n_training_volume/7) # days
-trunc_rep_tri_list <- truncate_triangles(reporting_triangle,
-  n = n_retrospective_nowcasts
-)
-retro_rep_tri_list <- construct_triangles(trunc_rep_tri_list)
-```
-
-```{r}
-
-retro_pt_nowcast_mat_list <- fill_triangles(
-  retro_reporting_triangles = retro_rep_tri_list,
-  n = n_history_delay/7
-)
-disp_params <- estimate_uncertainty(
-  point_nowcast_matrices = retro_pt_nowcast_mat_list,
-  truncated_reporting_triangles = trunc_rep_tri_list,
-  retro_reporting_triangles = retro_rep_tri_list,
-  n = n_retrospective_nowcasts
-)
-```
+If you would like to explore nowcasting further, we suggest using a dataset 
