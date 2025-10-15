@@ -83,6 +83,41 @@ Hospitalization Data</h3>
 <div class="section level2">
 <h2 id="load-packages">Load packages<a class="anchor" aria-label="anchor" href="#load-packages"></a>
 </h2>
+<pre><code><span><span class="co">## Loading required package: gitcreds</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: jsonlite</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: remotes</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: scales</span></span></code></pre>
+<pre><code><span><span class="co">## Loading required package: tidyverse</span></span></code></pre>
+<pre><code><span><span class="co">## ── <span style="font-weight: bold;">Attaching core tidyverse packages</span> ──────────────────────── tidyverse 2.0.0 ──</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">dplyr    </span> 1.1.4     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">readr    </span> 2.1.5</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">forcats  </span> 1.0.1     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">stringr  </span> 1.5.2</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">ggplot2  </span> 4.0.0     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tibble   </span> 3.3.0</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">lubridate</span> 1.9.4     <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tidyr    </span> 1.3.1</span></span>
+<span><span class="co">## <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">purrr    </span> 1.1.0     </span></span>
+<span><span class="co">## ── <span style="font-weight: bold;">Conflicts</span> ────────────────────────────────────────── tidyverse_conflicts() ──</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">readr</span>::<span style="color: #00BB00;">col_factor()</span> masks <span style="color: #0000BB;">scales</span>::col_factor()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">purrr</span>::<span style="color: #00BB00;">discard()</span>    masks <span style="color: #0000BB;">scales</span>::discard()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">filter()</span>     masks <span style="color: #0000BB;">stats</span>::filter()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">purrr</span>::<span style="color: #00BB00;">flatten()</span>    masks <span style="color: #0000BB;">jsonlite</span>::flatten()</span></span>
+<span><span class="co">## <span style="color: #BB0000;">✖</span> <span style="color: #0000BB;">dplyr</span>::<span style="color: #00BB00;">lag()</span>        masks <span style="color: #0000BB;">stats</span>::lag()</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Use the conflicted package (<span style="color: #0000BB; font-style: italic;">&lt;http://conflicted.r-lib.org/&gt;</span>) to force all conflicts to become errors</span></span>
+<span><span class="co">## Registered S3 method overwritten by 'tsibble':</span></span>
+<span><span class="co">##   method               from </span></span>
+<span><span class="co">##   as_tibble.grouped_df dplyr</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Registered S3 method overwritten by 'epipredict':</span></span>
+<span><span class="co">##   method            from   </span></span>
+<span><span class="co">##   print.step_naomit recipes</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Loading required package: epidatasets</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Attaching package: 'epiprocess'</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## The following object is masked from 'package:stats':</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">##     filter</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="save-and-check-api-key">Save and check API key<a class="anchor" aria-label="anchor" href="#save-and-check-api-key"></a>
@@ -98,7 +133,7 @@ RStudio. After restarting, run the command
 <code><a href="https://cmu-delphi.github.io/epidatr/reference/get_api_key.html" class="external-link">epidatr::get_api_key()</a></code> to check that your API key is
 saved.</p></li>
 </ol>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Follow instructions about opening `.Renviron` file</span></span>
 <span><span class="fu">epidatr</span><span class="fu">::</span><span class="fu"><a href="https://cmu-delphi.github.io/epidatr/reference/get_api_key.html" class="external-link">save_api_key</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -108,7 +143,7 @@ saved.</p></li>
 <div class="section level2">
 <h2 id="pull-nhsn-hospitalization-data">Pull NHSN hospitalization data<a class="anchor" aria-label="anchor" href="#pull-nhsn-hospitalization-data"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">target_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_nhsn_data.html">get_nhsn_data</a></span><span class="op">(</span></span>
 <span>  disease <span class="op">=</span> <span class="va">forecast_disease</span>, <span class="co">#"influenza"  or "rsv" or "covid"</span></span>
 <span>  geo_values <span class="op">=</span> <span class="va">geo_ids</span>,</span>
@@ -130,7 +165,7 @@ date, you need to filter by issue date. The code below is not set up to
 do that, so it will pull the most recent data. To pull data as of a
 previous forecast date, use the <code><a href="../reference/get_nhsn_data.html">get_nhsn_data()</a></code> function
 above.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Map disease names to NHSN signal names</span></span>
 <span><span class="co"># Based on epidatr NHSN signals for respiratory diseases</span></span>
 <span><span class="va">signal_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -171,7 +206,7 @@ above.</p>
 <div class="section level3">
 <h3 id="check-the-data">Check the data<a class="anchor" aria-label="anchor" href="#check-the-data"></a>
 </h3>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggplot</span><span class="op">(</span><span class="va">target_data</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">target_end_date</span>, y <span class="op">=</span> <span class="va">observation</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">toupper</a></span><span class="op">(</span><span class="va">location_name</span><span class="op">)</span>, scales <span class="op">=</span> <span class="st">"free_y"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -185,7 +220,7 @@ above.</p>
 <div class="section level3">
 <h3 id="save-it">Save it<a class="anchor" aria-label="anchor" href="#save-it"></a>
 </h3>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">write_csv</span><span class="op">(</span><span class="va">target_data</span>, file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"target-data"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"target-hospital-admissions-"</span>, <span class="va">forecast_date</span>, <span class="st">".csv"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
