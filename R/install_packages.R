@@ -139,6 +139,7 @@ install_forecast_packages <- function(install_delphi = TRUE,
   if (install_nowcast) {
     message("Installing nowcasting packages...")
     install.packages("epinowcast", repos = "https://epinowcast.r-universe.dev")
+    
     remotes::install_github("epinowcast/baselinenowcast")
   }
 
