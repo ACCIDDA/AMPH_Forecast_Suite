@@ -70,6 +70,7 @@ Remotes:
     hubverse-org/hubVis,
     cmu-delphi/epiprocess,
     cmu-delphi/epipredict,
+    epinowcast/epinowcast,
     epinowcast/baselinenowcast
 Additional_repositories:
     https://epinowcast.r-universe.dev,
