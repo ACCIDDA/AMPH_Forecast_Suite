@@ -64,4 +64,5 @@ Remotes:
     hubverse-org/hubVis,
     cmu-delphi/epiprocess,
     cmu-delphi/epipredict,
-    epinowcast/baselinenowcast
+    epinowcast/baselinenowcast,
+    epinowcast/epinowcast
