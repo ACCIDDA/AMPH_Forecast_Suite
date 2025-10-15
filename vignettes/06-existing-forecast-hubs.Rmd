@@ -1,0 +1,472 @@
+---
+title: "6. Existing Forecast and Scenario Projection Hubs"
+subtitle: "Overview of Active Infectious Disease Modeling Hubs"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+vignette: >
+  %\VignetteIndexEntry{6. Existing Forecast and Scenario Projection Hubs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+# Introduction
+
+This vignette provides an overview of existing forecast and scenario projection hubs for infectious diseases in the United States. These hubs serve as collaborative platforms where modeling teams submit forecasts or scenario projections, which are then aggregated, visualized, and shared with public health decision-makers.
+
+The hubs described here are actively maintained and provide valuable resources for understanding infectious disease trends and supporting public health planning. They follow standardized formats and protocols, many of which are based on the [Hubverse](https://hubverse.io/) framework.
+
+# Forecast Hubs
+
+Forecast hubs collect short-term predictions about disease incidence, hospitalizations, or other metrics. These forecasts are typically generated weekly and provide probabilistic predictions for the upcoming weeks.
+
+## RSV Forecast Hub
+
+**Website:** [https://rsvforecasthub.org/](https://rsvforecasthub.org/)  
+**GitHub Repository:** [@HopkinsIDD/rsv-forecast-hub](https://github.com/HopkinsIDD/rsv-forecast-hub)
+
+### Description
+
+The RSV Forecast Hub is a collaborative effort to collect and aggregate forecasts of respiratory syncytial virus (RSV) hospitalizations in the United States. The hub is maintained by researchers at Johns Hopkins University and collects weekly forecasts from multiple modeling teams.
+
+### Key Features
+
+- **Target Variable:** Weekly RSV-associated hospital admissions
+- **Geographic Coverage:** National and state-level forecasts across the United States
+- **Forecast Horizon:** Typically 1-4 weeks ahead
+- **Submission Frequency:** Weekly
+- **Data Sources:** Hospital admission data from the National Healthcare Safety Network (NHSN)
+
+### Dashboard
+
+The RSV Forecast Hub website provides interactive visualizations showing:
+
+- Current ensemble forecasts and individual model predictions
+- Historical forecast performance
+- Comparison of different modeling approaches
+- Geographic distribution of predicted RSV hospitalizations
+
+### Use Cases
+
+- Supporting public health planning for RSV season
+- Monitoring RSV trends and hospitalizations
+- Evaluating forecast model performance
+- Informing healthcare capacity planning
+
+---
+
+## COVID-19 Forecast Hub
+
+**Website:** [https://covid19forecasthub.org/](https://covid19forecasthub.org/)  
+**GitHub Repositories:** 
+- [@reichlab/covid19-forecast-hub](https://github.com/reichlab/covid19-forecast-hub)
+- [@CDCgov/covid19-forecast-hub](https://github.com/CDCgov/covid19-forecast-hub)
+
+### Description
+
+The COVID-19 Forecast Hub was established in March 2020 as a collaborative effort to collect and combine forecasts of COVID-19 cases, hospitalizations, and deaths in the United States. Led by the Reich Lab at UMass Amherst in collaboration with the CDC, this hub became a critical resource during the pandemic.
+
+### Key Features
+
+- **Target Variables:** 
+  - Weekly COVID-19 hospital admissions
+  - Weekly COVID-19 deaths
+  - Weekly COVID-19 cases (historical)
+- **Geographic Coverage:** National, state, and county-level forecasts
+- **Forecast Horizon:** 1-4 weeks ahead
+- **Submission Frequency:** Weekly
+- **Ensemble Model:** The hub creates an ensemble forecast combining multiple models, which was used by the CDC for public communication
+
+### Dashboard
+
+The COVID-19 Forecast Hub website features:
+
+- Interactive maps showing forecasted trends
+- Time series plots of historical and predicted values
+- Model comparison tools
+- Downloadable forecast data
+- Historical archives of all submitted forecasts
+
+### Impact
+
+- Provided critical forecasts to the CDC and other public health agencies
+- Ensemble forecasts were featured in CDC communications
+- Pioneered collaborative forecasting approaches that influenced subsequent hubs
+- Published methodology and evaluation studies in peer-reviewed journals
+
+---
+
+## FluSight Influenza Forecast Hub
+
+**Website:** [https://www.cdc.gov/flu-forecasting/about/index.html](https://www.cdc.gov/flu-forecasting/about/index.html)  
+**Dashboard:** [https://www.cdc.gov/flu-forecasting/data-vis/current-week.html](https://www.cdc.gov/flu-forecasting/data-vis/current-week.html)  
+**GitHub Repository:** [@cdcepi/FluSight-forecast-hub](https://github.com/cdcepi/FluSight-forecast-hub)
+
+### Description
+
+The FluSight Influenza Forecast Hub is managed by the CDC and represents the longest-running infectious disease forecast hub in the United States. Building on the annual FluSight challenges that began in 2013, the current hub collects weekly forecasts of influenza hospitalizations.
+
+### Key Features
+
+- **Target Variable:** Weekly influenza hospital admissions
+- **Geographic Coverage:** National and state-level forecasts
+- **Forecast Horizon:** 0-3 weeks ahead (nowcast and short-term forecasts)
+- **Submission Frequency:** Weekly during flu season
+- **Data Sources:** NHSN hospital admission data
+- **Historical Context:** Builds on nearly a decade of seasonal influenza forecasting challenges
+
+### Dashboard
+
+The CDC's FluSight visualization dashboard includes:
+
+- Current week's ensemble forecast with uncertainty intervals
+- State-by-state forecast maps
+- Historical forecast accuracy metrics
+- Comparison with previous flu seasons
+- Model-specific forecast visualizations
+
+### Use Cases
+
+- Supporting CDC's seasonal influenza surveillance and response
+- Informing vaccine distribution and healthcare resource allocation
+- Providing early warning of increasing influenza activity
+- Evaluating and improving influenza forecast models over multiple seasons
+
+---
+
+## Flu MetroCast Hub
+
+**Website:** [https://reichlab.io/metrocast-dashboard/](https://reichlab.io/metrocast-dashboard/)  
+**GitHub Repository:** [@reichlab/flu-metrocast](https://github.com/reichlab/flu-metrocast)
+
+### Description
+
+The Flu MetroCast Hub is a research project led by the Reich Lab at UMass Amherst focusing on metropolitan-level influenza forecasts. Unlike other hubs that primarily focus on state and national levels, MetroCast provides more granular geographic predictions.
+
+### Key Features
+
+- **Target Variable:** Influenza-like illness (ILI) or influenza hospitalizations
+- **Geographic Coverage:** Metropolitan statistical areas (MSAs) across the United States
+- **Forecast Horizon:** Short-term forecasts (typically 1-4 weeks)
+- **Focus:** Sub-state geographic resolution for more targeted public health action
+
+### Dashboard
+
+The MetroCast dashboard provides:
+
+- Metropolitan area-level forecast visualizations
+- Interactive maps of predicted influenza activity
+- Time series comparisons across metro areas
+- Model performance metrics
+
+### Use Cases
+
+- Supporting city and county-level public health planning
+- Enabling more targeted interventions in urban areas
+- Studying spatial patterns of influenza transmission
+- Developing and evaluating sub-state forecasting methods
+
+---
+
+# Scenario Projection Hubs
+
+Scenario projection hubs differ from forecast hubs in that they produce longer-term projections based on specific assumptions about future conditions (e.g., vaccination rates, emergence of new variants, implementation of interventions). These projections are used for planning and policy analysis rather than near-term prediction.
+
+## COVID-19 Scenario Modeling Hub
+
+**Website:** [https://covid19scenariomodelinghub.org/](https://covid19scenariomodelinghub.org/)  
+**GitHub Repository:** [@midas-network/covid19-scenario-modeling-hub](https://github.com/midas-network/covid19-scenario-modeling-hub)
+
+### Description
+
+The COVID-19 Scenario Modeling Hub (SMH) was established to provide medium- and long-term scenario projections of the COVID-19 pandemic. Coordinated by the MIDAS Network (Models of Infectious Disease Agent Study), the hub collects scenario projections from multiple modeling teams based on coordinated scenario assumptions.
+
+### Key Features
+
+- **Projection Type:** Medium- to long-term scenario projections (weeks to months ahead)
+- **Target Variables:** 
+  - Incident cases
+  - Hospitalizations
+  - Deaths
+- **Scenarios:** Multiple scenarios based on different assumptions about:
+  - Variant emergence and characteristics
+  - Vaccination coverage and booster uptake
+  - Non-pharmaceutical interventions
+  - Population behavior
+- **Submission Frequency:** Round-based (typically every 1-3 months)
+
+### Dashboard
+
+The COVID-19 SMH website features:
+
+- Scenario-specific projections with clear assumption statements
+- Comparison across different scenarios
+- State and national-level visualizations
+- Reports summarizing key findings from each projection round
+- Historical archive of all scenario rounds
+
+### Use Cases
+
+- Supporting long-term pandemic planning
+- Evaluating potential impact of policy decisions
+- Comparing outcomes under different intervention strategies
+- Informing vaccine distribution and healthcare capacity planning
+
+---
+
+## Influenza Scenario Modeling Hub
+
+**Website:** [https://fluscenariomodelinghub.org/](https://fluscenariomodelinghub.org/)  
+**GitHub Repository:** [@midas-network/flu-scenario-modeling-hub](https://github.com/midas-network/flu-scenario-modeling-hub)
+
+### Description
+
+The Influenza Scenario Modeling Hub extends the scenario modeling approach to seasonal influenza. Like the COVID-19 SMH, it is coordinated by the MIDAS Network and provides scenario-based projections to support public health planning.
+
+### Key Features
+
+- **Projection Type:** Seasonal scenario projections
+- **Target Variables:**
+  - Incident influenza cases
+  - Hospitalizations
+  - Deaths
+- **Scenarios:** Based on assumptions about:
+  - Seasonal severity
+  - Vaccine effectiveness and coverage
+  - Timing of seasonal peak
+  - Antiviral availability and use
+- **Submission Frequency:** Seasonal rounds (typically before and during flu season)
+
+### Dashboard
+
+The Influenza SMH website includes:
+
+- Season-specific scenario projections
+- Comparison of different severity scenarios
+- Geographic visualizations at state and national levels
+- Summary reports for each projection round
+
+### Use Cases
+
+- Pre-season planning for healthcare systems
+- Vaccine allocation and distribution planning
+- Evaluating potential benefits of different intervention strategies
+- Preparing for various levels of seasonal severity
+
+---
+
+## RSV Scenario Modeling Hub
+
+**Website:** [https://rsvscenariomodelinghub.org/](https://rsvscenariomodelinghub.org/)  
+**GitHub Repository:** [@midas-network/rsv-scenario-modeling-hub](https://github.com/midas-network/rsv-scenario-modeling-hub)
+
+### Description
+
+The RSV Scenario Modeling Hub is the newest addition to the scenario modeling hub family. It provides scenario projections for RSV, particularly relevant given the recent availability of new RSV vaccines and immunoprophylaxis options.
+
+### Key Features
+
+- **Projection Type:** Scenario projections for RSV seasons
+- **Target Variables:**
+  - RSV-associated hospitalizations
+  - Cases (when data available)
+- **Scenarios:** Focus on:
+  - Vaccine and immunoprophylaxis uptake
+  - Impact of new prevention tools
+  - Seasonal severity variations
+  - Age-specific outcomes
+- **Submission Frequency:** Seasonal rounds
+
+### Dashboard
+
+The RSV SMH website provides:
+
+- Scenario projections considering different prevention strategies
+- Age-stratified projections
+- State and national-level visualizations
+- Impact assessments of vaccination and immunoprophylaxis programs
+
+### Use Cases
+
+- Planning for new RSV prevention tools (vaccines, monoclonal antibodies)
+- Evaluating potential impact of different coverage levels
+- Supporting healthcare system planning for RSV season
+- Informing policies on RSV prevention programs
+
+---
+
+# Comparing Hubs: Forecasts vs. Scenarios
+
+## Forecast Hubs
+
+- **Time Horizon:** Short-term (1-4 weeks)
+- **Purpose:** Predict what is likely to happen
+- **Frequency:** Weekly submissions
+- **Use Case:** Near-term situational awareness and response planning
+- **Validation:** Can be directly validated against observed data
+- **Examples:** RSV Forecast Hub, COVID-19 Forecast Hub, FluSight
+
+## Scenario Projection Hubs
+
+- **Time Horizon:** Medium- to long-term (weeks to months)
+- **Purpose:** Explore what could happen under different conditions
+- **Frequency:** Round-based (typically every 1-3 months)
+- **Use Case:** Policy analysis and longer-term strategic planning
+- **Validation:** Evaluated based on assumptions and conditional outcomes
+- **Examples:** COVID-19 Scenario Modeling Hub, Influenza Scenario Modeling Hub, RSV Scenario Modeling Hub
+
+---
+
+# Common Technical Framework
+
+Most of these hubs use common technical standards:
+
+## Data Formats
+
+- **Model Output:** Standardized file formats (typically CSV with quantile or sample-based probabilistic forecasts)
+- **Target Data:** Common reference datasets (e.g., NHSN for hospitalizations)
+- **Metadata:** Model descriptions, assumptions, and methods documented in metadata files
+
+## Hubverse Standards
+
+Many hubs have adopted or are transitioning to the [Hubverse](https://hubverse.io/) framework, which provides:
+
+- Standardized file formats and directory structures
+- Validation tools (hubValidations package)
+- Data access tools (hubData package)
+- Visualization tools (hubVis package)
+- Ensemble generation tools (hubEnsembles package)
+
+## Submission Process
+
+1. **Scenario Definition:** For scenario hubs, coordinated scenario specifications are released
+2. **Model Development:** Teams develop and run their models
+3. **Submission:** Models submit predictions via pull requests to the hub's GitHub repository
+4. **Validation:** Automated checks ensure submissions meet format requirements
+5. **Aggregation:** Hub coordinators create ensemble forecasts (for forecast hubs)
+6. **Visualization:** Results are displayed on hub websites
+7. **Evaluation:** Ongoing assessment of forecast/projection accuracy and calibration
+
+---
+
+# Using Hub Data in Your Work
+
+```{r load-packages, eval=FALSE}
+library(AMPHForecastSuite)
+library(hubData)
+library(hubVis)
+library(dplyr)
+```
+
+## Accessing Hub Data
+
+You can access data from these hubs programmatically:
+
+```{r access-hub-data, eval=FALSE}
+# Clone a forecast hub repository
+repo_dir <- clone_hub_repos(
+  disease = "influenza",  # or "covid", "rsv"
+  clone_dir = getwd()
+)
+
+# Load forecast data using hubData
+library(hubData)
+forecasts <- hubData::connect_hub(repo_dir) %>%
+  hubData::collect_forecasts()
+```
+
+## Working with Hub Outputs
+
+The AMPH Forecast Suite provides tools to work with hub data:
+
+```{r work-with-hub, eval=FALSE}
+# Visualize forecasts
+library(hubVis)
+plot_forecasts(forecasts, 
+               target = "wk inc flu hosp",
+               location = "US")
+
+# Score forecasts against observations
+library(scoringutils)
+scores <- score_forecasts(
+  forecasts = forecasts,
+  truth = target_data
+)
+```
+
+---
+
+# Contributing to Hubs
+
+If you're interested in contributing forecasts or scenario projections to these hubs:
+
+1. **Review Hub Documentation:** Each hub has detailed documentation in its GitHub repository
+2. **Understand Requirements:** Review format specifications and submission guidelines
+3. **Develop Models:** Build forecasting or projection models appropriate for the hub
+4. **Test Submissions:** Use validation tools to ensure your submissions meet requirements
+5. **Submit via Pull Request:** Follow the hub's submission process
+6. **Engage with Community:** Join mailing lists and attend hub meetings
+
+Many hubs welcome new contributors and provide support for teams developing models.
+
+---
+
+# Resources and Further Reading
+
+## General Resources
+
+- **Hubverse Documentation:** [https://hubverse.io/](https://hubverse.io/)
+- **MIDAS Network:** [https://midasnetwork.us/](https://midasnetwork.us/)
+- **CDC Forecasting:** [https://www.cdc.gov/forecast-outbreak-analytics/](https://www.cdc.gov/forecast-outbreak-analytics/)
+
+## Publications
+
+Many of these hubs have published peer-reviewed papers describing their methods, results, and lessons learned. Check the individual hub websites for publications lists.
+
+## Training Materials
+
+- **Hubverse Workshops:** The Hubverse community offers workshops and training materials
+- **MIDAS Training:** The MIDAS Network provides training in infectious disease modeling
+- **CDC Resources:** The CDC offers resources on forecast interpretation and use
+
+---
+
+# Conclusion
+
+The forecast and scenario projection hubs described in this vignette represent a mature ecosystem for collaborative infectious disease modeling. They provide:
+
+- **Transparent Processes:** Open-source code and data
+- **Standardized Approaches:** Common formats and protocols
+- **Collaborative Science:** Multi-team efforts with diverse methods
+- **Practical Impact:** Direct support for public health decision-making
+
+The AMPH Forecast Suite is designed to work seamlessly with these hubs, providing tools to:
+
+- Access hub data
+- Format your models' outputs for hub submission
+- Evaluate forecasts using hub standards
+- Visualize and compare results
+
+Whether you're using hub data for research, developing new forecasting methods, or contributing to these collaborative efforts, understanding the landscape of existing hubs is essential for effective infectious disease forecasting.
+
+---
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```
