@@ -38,7 +38,6 @@ jobs:
             standev = "https://stan-dev.r-universe.dev",
             CRAN = "https://cloud.r-project.org"
           ))
-          install.packages("cmdstanr")
           install.packages("epinowcast")
           install.packages("baselinenowcast")
         shell: Rscript {0}
