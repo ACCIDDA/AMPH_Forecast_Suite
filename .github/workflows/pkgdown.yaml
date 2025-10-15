@@ -38,7 +38,6 @@ jobs:
           dependencies: '"all"'
           repositories: |
             https://epinowcast.r-universe.dev
-            https://stan-dev.r-universe.dev
             https://cloud.r-project.org
 
       - name: Build site
