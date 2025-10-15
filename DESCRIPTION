@@ -55,6 +55,8 @@ Suggests:
     fabletools,
     tsibble,
     epidatr,
+    epinowcast,
+    baselinenowcast,
     epitools,
     testthat (>= 3.0.0),
     knitr,
