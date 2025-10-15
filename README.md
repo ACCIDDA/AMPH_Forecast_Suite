@@ -10,7 +10,7 @@ The AMPH Forecast Suite is an R package that provides a comprehensive toolkit fo
 - Setting up appropriate directory structure
 - Pulling and manipulating data to use with forecasting models
 - Providing helper functions to translate data between different package formats
-- Running forecasts using multiple packages
+- Running forecasts and nowcast using multiple packages
 - Ensembling, visualizing, and evaluating forecasts
 - Producing outputs compatible with forecast hubs and evaluation tools
 
@@ -45,7 +45,8 @@ install_forecast_packages(
   install_hubverse = TRUE,
   install_forecasting = TRUE,
   install_epi = TRUE,
-  install_data = TRUE
+  install_data = TRUE,
+  install_nowcast = TRUE
 )
 ```
 
@@ -72,6 +73,10 @@ The package helps you install and work with:
 - EpiEstim: Estimate time-varying reproduction numbers
 - EpiNow2: Estimate Rt and forecast with delays
 - epipredict: Epidemiological forecasting tools
+
+### Nowcasting packages
+- epinowcast: Flexible Hierarchical Nowcasting
+- baselinenowcast: Baseline nowcasting methods for handling delays in epidemiological data
 
 ### Data Access
 - epidatr: Access epidemiological data from various sources
