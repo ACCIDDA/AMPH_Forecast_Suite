@@ -29,6 +29,7 @@ install_forecast_packages <- function(install_delphi = TRUE,
                                       install_forecasting = TRUE,
                                       install_epi = TRUE,
                                       install_data = TRUE,
+                                      install_nowcast = TRUE,
                                       repos = "https://cloud.r-project.org") {
 
   # general packages
@@ -133,6 +134,12 @@ install_forecast_packages <- function(install_delphi = TRUE,
         })
       }
     }
+  }
+
+  if (install_nowcast) {
+    message("Installing nowcasting packages...")
+    install.packages("epinowcast", repos = "https://epinowcast.r-universe.dev")
+    remotes::install_github("epinowcast/baselinenowcast")
   }
 
   message("Package installation complete!")
