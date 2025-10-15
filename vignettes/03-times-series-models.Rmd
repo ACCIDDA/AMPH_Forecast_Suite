@@ -35,6 +35,8 @@ library(jsonlite)
 library(epidatr)
 library(epipredict)
 library(epiprocess)
+library(ggplot2)
+library(dplyr)
 ```
 
 ## Load target (observed) data
@@ -45,7 +47,13 @@ We already pulled and saved the data we need in `Collect Empirical Data`. See `v
 
 # Load data saved from a specific forecast date: 
 target_data_path <- file.path("target-data", paste0("target-hospital-admissions-", forecast_date, ".csv"))
-target_data <- readr::read_csv(file = target_data_path) %>% mutate(location = as.character(location))
+
+target_data <- readr::read_csv(file = target_data_path) %>%
+  mutate(location = as.character(location)) %>%
+  dplyr::filter(!is.na(observation)) %>%        # keep rows with observed values
+  dplyr::arrange(dplyr::across(dplyr::any_of(c("target_end_date","date"))))
+
+
 
 # get location id to add to forecast output
 location_dat <- target_data %>%
@@ -75,7 +83,7 @@ message("Forecast date: ", forecast_date)
 
 ## SARIMA (`forecast` package)
 
-Here we use the `auto.arima` function from the `forecast` package to fit a seasonal ARIMA model to the data.
+Here we use the `auto.arima` function from the `forecast` package to fit a seasonal ARIMA model to the data (seasonal = T). Use (seasonal = F) to remove seasonality.
 
 ### Set the name
 ```{r}
@@ -91,6 +99,54 @@ fc_sarima <- forecast::auto.arima(y = target_data$observation,
            level = c(.1, .2, .3, .4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
 ```
+
+### Plot SARIMA forecast results
+
+```{r fig.alt="SARIMA model fit and forecast", fig.cap="SARIMA model fit and forecast"}
+
+# Build data for plotting
+h <- length(forecast_horizon_wks)
+
+# dates for history + horizon (uses target_end_date if present; else index)
+hist_dates <- if ("target_end_date" %in% names(target_data)) as.Date(target_data$target_end_date) else seq_len(nrow(target_data))
+fc_dates   <- if (is.Date(hist_dates)) max(hist_dates) + 7L*seq_len(h) else max(hist_dates) + seq_len(h)
+
+df_hist <- data.frame(date = hist_dates, value = target_data$observation)
+
+pick <- function(mat, lvl){
+  nm <- paste0(lvl, "%")
+  if (!is.null(colnames(mat)) && nm %in% colnames(mat)) mat[, nm] else mat[, ncol(mat)]
+}
+
+df_fc <- data.frame(
+  date = fc_dates,
+  mean = as.numeric(fc_sarima$mean),
+  l80  = as.numeric(pick(fc_sarima$lower, 80)),
+  u80  = as.numeric(pick(fc_sarima$upper, 80)),
+  l95  = as.numeric(pick(fc_sarima$lower, 95)),
+  u95  = as.numeric(pick(fc_sarima$upper, 95))
+)
+
+# keep only the last 10 observed points to view most recent data
+df_hist_last <- df_hist %>% arrange(date) %>% slice_tail(n = 10)
+
+# x-range: last observed window through end of forecast
+x_start <- min(df_hist_last$date)
+x_end   <- max(df_fc$date)
+
+ggplot() +
+  geom_point(data = df_hist_last, aes(date, value)) +
+  geom_ribbon(data = df_fc, aes(date, ymin = l95, ymax = u95), alpha = 0.15) +
+  geom_ribbon(data = df_fc, aes(date, ymin = l80, ymax = u80), alpha = 0.25) +
+  geom_line(data = df_fc, aes(date, mean)) +
+  coord_cartesian(xlim = c(x_start, x_end)) +
+  labs(title = "SARIMA model fit and forecast",
+       x = "Date", y = "Hospital admissions") +
+  theme_minimal(base_size = 12)
+
+
+```
+
 
 ### Check that the model output is in the correct format.
 We use the `hubValidations` package to check against the `tasks.json` file we create in `Getting Started`.
@@ -141,6 +197,33 @@ fc_nnet <- forecast::nnetar(target_data$observation,
            level = c(.1, .2, .3, .4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
 ```
+
+### Plot Neural Network forecast results
+
+```{r fig.alt="Neural network model fit and forecast", fig.cap="Neural network model fit and forecast"}
+
+df_fc <- data.frame(
+  date = fc_dates,
+  mean = as.numeric(fc_nnet$mean),
+  l80  = as.numeric(pick(fc_nnet$lower, 80)),
+  u80  = as.numeric(pick(fc_nnet$upper, 80)),
+  l95  = as.numeric(pick(fc_nnet$lower, 95)),
+  u95  = as.numeric(pick(fc_nnet$upper, 95))
+)
+
+ggplot() +
+  geom_point(data = df_hist_last, aes(date, value)) +
+  geom_ribbon(data = df_fc, aes(date, ymin = l95, ymax = u95), alpha = 0.15) +
+  geom_ribbon(data = df_fc, aes(date, ymin = l80, ymax = u80), alpha = 0.25) +
+  geom_line(data = df_fc, aes(date, mean)) +
+  coord_cartesian(xlim = c(x_start, x_end)) +
+  labs(title = "Neural network model fit and forecast",
+       x = "Date", y = "Hospital admissions") +
+  theme_minimal(base_size = 12)
+
+
+```
+
 
 ### Save in hubVerse Format
 
