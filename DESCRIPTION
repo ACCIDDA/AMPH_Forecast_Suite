@@ -60,7 +60,8 @@ Suggests:
     knitr,
     rmarkdown,
     forecast,
-    rsconnect
+    rsconnect,
+    usethis
 URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
