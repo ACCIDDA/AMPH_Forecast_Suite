@@ -31,24 +31,12 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install nowcasting packages from r-universe
-        run: |
-          options(repos = c(
-            epinowcast = "https://epinowcast.r-universe.dev",
-            standev = "https://stan-dev.r-universe.dev",
-            CRAN = "https://cloud.r-project.org"
-          ))
-          install.packages("epinowcast")
-          install.packages("baselinenowcast")
-        shell: Rscript {0}
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
           repositories: |
             https://epinowcast.r-universe.dev
-            https://stan-dev.r-universe.dev
             https://cloud.r-project.org
 
       - name: Build site
