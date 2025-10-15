@@ -22,7 +22,7 @@ forecast_date = "2024-12-01" #"2025-10-12" # Sunday
 
 # Load packages
 
-```{r setup, include=FALSE}
+```{r setup, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(AMPHForecastSuite)
@@ -38,6 +38,8 @@ library(epiprocess)
 1. Go to https://api.delphi.cmu.edu/epidata/admin/registration_form and register for a psuedo-anonymous account.
 
 2. Run the command below to save your API key in your `.Renviron` file. As it says in the prompt, add a line `DELPHI_EPIDATA_KEY=yourkeyhere` to your `.Renviron` file. Save and close the file, then restart R or RStudio. After restarting, run the command `epidatr::get_api_key()` to check that your API key is saved.
+
+If the API key does not come, you can use this one until it comes: `04e7369e1541a`    
 
 ```{r epidatr_api, eval=FALSE}
 

@@ -10,6 +10,7 @@ install_forecast_packages(
   install_forecasting = TRUE,
   install_epi = TRUE,
   install_data = TRUE,
+  install_nowcast = TRUE,
   repos = "https://cloud.r-project.org"
 )
 }
@@ -42,6 +43,7 @@ install_forecast_packages()
 # Install only hubverse packages
 install_forecast_packages(install_forecasting = FALSE,
                          install_epi = FALSE,
-                         install_data = FALSE)
+                         install_data = FALSE,
+                         install_nowcast = FALSE)
 }
 }
