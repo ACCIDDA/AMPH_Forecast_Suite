@@ -43,8 +43,14 @@ Imports:
     hubEnsembles,
     scoringutils,
     epipredict (>= 0.2.1),
-    epiprocess (>= 0.12.0.9999)
+    epiprocess (>= 0.12.0.9999),
+    data.table,
+    EpiEstim,
+    epidatr,
+    plotly,
+    patchwork
 Suggests:
+    learnr,
     fable,
     fabletools,
     tsibble,
@@ -55,7 +61,8 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    forecast
+    forecast,
+    rsconnect
 URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
