@@ -98,7 +98,9 @@ Here we have transformed the data so it is in the format for epinowcast, with co
  * `reference_date` the date of the observation, in this example the date of an incident influenza admission in a hospital
  * `report_date`: the date of report for a given set of observations by reference date
  * `confirm`: the total (i.e. cumulative) number of hospitalisations by reference date and report date.
-  
+``` {r}
+target_data
+```
 
 Create two views of the data: the real-time version available on the nowcast date and the final version used for evaluation. This use very convenient filtering functions in epinowcast.  The epinowcast function `enw_latest_data()` filters observations to keep only the latest available reported total counts for each reference date.  The epinowcast function `enw_filter_report_dates()` is used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
   
