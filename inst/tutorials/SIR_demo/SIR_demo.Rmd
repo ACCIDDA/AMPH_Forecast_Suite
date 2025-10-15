@@ -5,7 +5,8 @@ runtime: shiny_prerendered
 date: "2025-10-16"
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
+library(AMPHForecastSuite)
 library(learnr)
 library(deSolve)
 library(data.table)
@@ -14,24 +15,65 @@ library(tidyverse)
 library(lubridate)
 knitr::opts_chunk$set(echo = TRUE)
 
-data_file <- fread("https://raw.githubusercontent.com/apwez/IDD_course/883be8b44cd4ccfa9dbbc1317802d665d1b27db0/Maryland_COVID19Data_IncidentCases.csv")
+data("COVIDMD")
 
-data_file$Date <- mdy(data_file$Date)
+# creating separate data objects for Baltimore city and Frederick county
+# removing the leading 0s in each time series
+balt_city <- COVIDMD |>
+           select(Date, new_cases=Baltimore.City) |>
+           filter(Date >= as.Date("2020-03-17"))
 
-  # creating separate data objects for Baltimore city and Frederick county
-  # removing the leading 0s in each time series
-  balt_city <- data_file |>
-               select(Date, new_cases=Baltimore.City) |>
-               filter(Date >= as.Date("2020-03-17"))
+fred_cty <- COVIDMD |>
+          select(Date, new_cases=Frederick.County) |>
+          filter(Date >= as.Date("2020-03-22"))
 
-  fred_cty <- data_file |>
-              select(Date, new_cases=Frederick.County) |>
-              filter(Date >= as.Date("2020-03-22"))
+sir_function <- function(t, y, param) {
+
+  # get parameters from param vector
+  beta = param["beta"]
+  gamma = param["gamma"]
   
+  # get the states from state vector
+  S = y["S"]; I = y["I"]; R = y["R"]
   
+  # compute the process flows
+  infection <- beta*S*I
+  recovery <- gamma*I
+  
+  # combine the flows for the relevant states
+  dSdt = -infection 
+  dIdt = +infection - recovery
+  dRdt = recovery
+  
+  # returning list of current system of eq for time t
+  return(list(c(dSdt, dIdt, dRdt)))
+}
 
+# have to define these here to use in the code blocks later
+run_sir_model <- function (
+    beta, gamma, initial.state, max.time, freq.dependent = TRUE
+) {
 
-
+    # if frequency dependent model, divide beta by N = S + I + R = sum(initial.state), so that
+    # ds/dt = -beta*S*I/N
+    # if density dependent model, divide by 1
+    beta.divisor <- ifelse(freq.dependent == TRUE, 
+                           sum(initial.state), 
+                           1)
+    
+    # create param vector to pass to SIR system of equations
+    param <- c(beta = beta/beta.divisor, gamma = gamma)
+    
+    # create time vector across which to run model
+    # note by default the time step is 1 unit
+    times <- seq(0, max.time, 1)
+    
+    # solve the SIR system of equations for given times, parameters, initial conditions
+    sir.output <- deSolve::lsoda(initial.state, times, sir_function, param)
+    
+    # return the SIR output, matrix of time, S, I, R values
+    return(as.data.table(sir.output))
+}
   
 ```
 
@@ -52,18 +94,17 @@ Let $S$ be the fraction of individuals in the population who are susceptible, $I
 &\frac{dR}{dt} = \gamma I 
 \end{align*}
 
-In this model, $\beta$ describes the transmission rate - the rate per time that an infected individual infects others - which depends on both the frequency of contact with others and the probability of transmission per contact. The recovery rate, $\gamma$, is the probability an infectious individual recovers per day, and more intuitively $\frac{1}{\gamma}$ is the average duration of infection. The basic reproduction number is $R_0 = \frac{\beta}{\gamma}$. This models assumes mass action and equal transmission and recovery rates in all members of the population.
+In this model, $\beta$ describes the transmission rate - the rate per time that an infected individual infects others - which depends on both the frequency of contact with others and the probability of transmission per contact. The recovery rate, $\gamma$, is approximately the probability an infectious individual recovers per time (so if $\gamma$ is per day, then probability per day, if per week, then per week, etc). More precisely $\frac{1}{\gamma}$ is the average duration of infection. The basic reproduction number is $R_0 = \frac{\beta}{\gamma}$. This models assumes mass action and equal transmission and recovery rates in all members of the population.
 
 ```{r gen_time, echo = FALSE}
 question("The average duration of infection for a particular disease is 5 days. This means:",
-         answer("a) 20% recovers each day", message = 'there is another response that is also correct'),
-         answer("b) in a population of 1000, 20 recover each day", message = 'this would be 200 if all 1000 were infected'),
-         answer('c) for a second pathogen with the same beta, but gamma equaled 1/8 days, it would infect more people', message = 'there is another response that is also correct'),
+         answer("a) approximately 20% recover each day", message = 'there is another response that is also correct'),
+         answer("b) in a population of 1000, approximately 20 recover each day", message = 'this would be 200 if all 1000 were infected'),
+         answer('c) for a different pathogen with the same transmission rate (beta), but lower gamma (e.g. 1/8 per day), it would infect more people', message = 'there is another response that is also correct'),
          answer("a and b", message = 'this is wrong'), 
          answer('a and c', correct = TRUE),
          answer('b and c', message = 'this is wrong'),
          allow_retry = TRUE
-         
 )
 ```
 
@@ -109,7 +150,7 @@ question("Why does do we multiple beta times S and I?",
 ### 
 ### Solving these equations
 
-We will introduce R code to numerically integrate the SIR model. Roughly, numerical integration is a method to take the model variables and the instantaneous rate of change at one point in time and use it to determine new values for the model variables after a very short timestep. It is extremely accurate and can be considered an "exact" solution to the equations. We will use a package called "deSolve".
+We will introduce R code to numerically integrate the SIR model. Roughly, numerical integration is a method to take the model variables and the instantaneous rate of change at one point in time and use it to determine new values for the model variables after a very short timestep. It is extremely accurate and can be considered an "exact" solution to the equations. We will use a package called `deSolve`.
 
 ```{r solve_sir}
 # run_sir_model takes inputs
@@ -118,7 +159,9 @@ We will introduce R code to numerically integrate the SIR model. Roughly, numeri
 #   initial.state: named vector of initial S, I, R states (must be # individuals for density dependent)
 #   max.time: number of time units for which to run model
 #   freq.dependent: logical for whether to run density dependent (FALSE) or frequency dependent (TRUE) model
-run_sir_model <- function (beta, gamma, initial.state, max.time, freq.dependent = TRUE) {
+run_sir_model <- function (
+    beta, gamma, initial.state, max.time, freq.dependent = TRUE
+) {
 
     # if frequency dependent model, divide beta by N = S + I + R = sum(initial.state), so that
     # ds/dt = -beta*S*I/N
@@ -284,22 +327,18 @@ Load and plot the provided data from Maryland. Specifically, make one plot for t
 You do not need to change the code below, but feel free to explore other locations too! 
 
 ```{r reading_in_data, eval = TRUE}
-  # make sure you have saved the CSV on your computer
-  # you may need to change your working directory and/or specify the full path to the data file
+# load the data from this package
+data("COVIDMD")
 
-data_file <- read.csv("https://raw.githubusercontent.com/apwez/IDD_course/883be8b44cd4ccfa9dbbc1317802d665d1b27db0/Maryland_COVID19Data_IncidentCases.csv")
+# creating separate data objects for Baltimore city and Frederick county
+# removing the leading 0s in each time series
+balt_city <- COVIDMD |>
+           dplyr::select(Date, new_cases=Baltimore.City) |>
+           filter(Date >= as.Date("2020-03-17"))
 
-data_file$Date <- mdy(data_file$Date)
-
-  # creating separate data objects for Baltimore city and Frederick county
-  # removing the leading 0s in each time series
-  balt_city <- data_file %>%
-               dplyr::select(Date, new_cases=Baltimore.City) %>%
-               filter(Date >= as.Date("2020-03-17"))
-
-  fred_cty <- data_file %>%
-              dplyr::select(Date, new_cases=Frederick.County) %>%
-              filter(Date >= as.Date("2020-03-22"))
+fred_cty <- COVIDMD |>
+          dplyr::select(Date, new_cases=Frederick.County) |>
+          filter(Date >= as.Date("2020-03-22"))
   
   ## plotting epi curves for each
   ggplot() +
@@ -328,7 +367,7 @@ Now we can use the following code to estimate $R_t$ for Baltimore City, and repe
   balt_df <- data.frame(date_start = balt_city$Date[t_start],
                         est = balt_rt$R$`Mean(R)`,
                         lower_ci = balt_rt$R$`Quantile.0.025(R)`,
-                        upper_ci=balt_rt$R$`Quantile.0.975(R)`) %>%
+                        upper_ci=balt_rt$R$`Quantile.0.975(R)`) |>
              mutate(date = date_start + 3)
   
   # defining time windows (1 week) for smoothing estimation
@@ -344,13 +383,13 @@ Now we can use the following code to estimate $R_t$ for Baltimore City, and repe
   fred_df <- data.frame(date_start = fred_cty$Date[t_start],
                         est = fred_rt$R$`Mean(R)`,
                         lower_ci = fred_rt$R$`Quantile.0.025(R)`,
-                        upper_ci=fred_rt$R$`Quantile.0.975(R)`) %>%
+                        upper_ci=fred_rt$R$`Quantile.0.975(R)`) |>
              mutate(date = date_start + 3)
   
   # combining data from each county for plotting
-  plt_df <- balt_df %>%
-            mutate(county="Baltimore city") %>%
-            bind_rows(fred_df %>% mutate(county="Frederick county"))
+  plt_df <- balt_df |>
+            mutate(county="Baltimore city") |>
+            bind_rows(fred_df |> mutate(county="Frederick county"))
   
   # plotting Rt for both counties
   p1<- ggplot(plt_df, aes(x=date, y=est, ymin=lower_ci, ymax=upper_ci, color=county, fill=county)) +
@@ -380,7 +419,7 @@ We used an estimate of the serial interval above from an early paper [investigat
   balt_df_longsi <- data.frame(date_start = balt_city$Date[t_start],
                                est = balt_rt_longsi$R$`Mean(R)`,
                                lower_ci = balt_rt_longsi$R$`Quantile.0.025(R)`,
-                               upper_ci=balt_rt_longsi$R$`Quantile.0.975(R)`) %>%
+                               upper_ci=balt_rt_longsi$R$`Quantile.0.975(R)`) |>
                     mutate(date = date_start + 3)
   
 
@@ -395,13 +434,13 @@ We used an estimate of the serial interval above from an early paper [investigat
   fred_df_longsi <- data.frame(date_start = fred_cty$Date[t_start],
                                est = fred_rt_longsi$R$`Mean(R)`,
                                lower_ci = fred_rt_longsi$R$`Quantile.0.025(R)`,
-                               upper_ci=fred_rt_longsi$R$`Quantile.0.975(R)`) %>%
+                               upper_ci=fred_rt_longsi$R$`Quantile.0.975(R)`) |>
                     mutate(date = date_start + 3)
   
   # combining data from each county for plotting
-  plt_df_longsi <- balt_df_longsi %>%
-                   mutate(county="Baltimore city") %>%
-                   bind_rows(fred_df_longsi %>% mutate(county="Frederick county"))
+  plt_df_longsi <- balt_df_longsi |>
+                   mutate(county="Baltimore city") |>
+                   bind_rows(fred_df_longsi |> mutate(county="Frederick county"))
   
   # plotting Rt for both counties w 4d estimate
   p2 <- ggplot(plt_df_longsi, aes(x=date, y=est, ymin=lower_ci, ymax=upper_ci, color=county, fill=county)) +
@@ -414,10 +453,10 @@ We used an estimate of the serial interval above from an early paper [investigat
   cowplot::plot_grid(p1 + lims(y=c(0.4, 5.6)), p2 + lims(y=c(0.4, 5.6)), nrow=2, labels=c("SI=4d", "SI=7d"))
   
     # combining 4 + 7 day serial interval estimates
-  plt_comb <- plt_df_longsi %>%
+  plt_comb <- plt_df_longsi |>
               rename(est_long = est,
                      lower_ci_long = lower_ci,
-                     upper_ci_long = upper_ci) %>%
+                     upper_ci_long = upper_ci) |>
               full_join(plt_df)
 
   # creating scatterplots of 4d vs 7d serial interval estimates
