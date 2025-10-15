@@ -327,6 +327,9 @@ To see larger adjustments, experiment with other locations, earlier nowcast date
 - Explore model variants documented in the
   [baselinenowcast vignette](https://baselinenowcast.epinowcast.org/articles/baselinenowcast.html)
   for stratified data or alternative delay models.
+  
+  
+## Let's work on a more interesting example
 
 ## More ressources:
 

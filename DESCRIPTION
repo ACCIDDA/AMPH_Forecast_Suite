@@ -54,6 +54,9 @@ Suggests:
     fable,
     fabletools,
     tsibble,
+    epidatr,
+    epinowcast,
+    baselinenowcast,
     epitools,
     testthat (>= 3.0.0),
     knitr,
@@ -62,8 +65,9 @@ Suggests:
 URL: https://github.com/ACCIDDA/AMPH_Forecast_Suite, https://accidda.github.io/AMPH_Forecast_Suite/
 BugReports: https://github.com/ACCIDDA/AMPH_Forecast_Suite/issues
 VignetteBuilder: knitr
-Remotes: 
+Remotes:
     hubverse-org/hubData,
     hubverse-org/hubVis,
     cmu-delphi/epiprocess,
-    cmu-delphi/epipredict
+    cmu-delphi/epipredict,
+    epinowcast/baselinenowcast
