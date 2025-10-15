@@ -1,5 +1,5 @@
 ---
-title: "Other: Introduction to versioning and nowcasting"
+title: "Other: Introduction to panel data versioning and nowcasting"
 output:
   html_document:
     toc: true
@@ -14,8 +14,24 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
 ```
 
+## Introduction
+This vignette walks through a minimal baseline nowcasting workflow using the `baselinenowcast` and `epinowcast` packages.
+We focus on weekly confirmed hospital admissions attributed to influenza in Maryland and illustrate how to:
+- retrieve revision-aware surveillance data,
+- build a reporting triangle,
+- estimate a reporting delay distribution, and
+- generate a deterministic point nowcast that corrects for under-reporting.
+
+We repeat these steps with TOODO
 
 ## Setup
+
+We assume you have followed the first guide of this course, and have an API key ready for the DELPHI Epidata API.
+
+```{r epidatr_api, eval=FALSE}
+epidatr::get_api_key()
+```
+
 We will nowcast the confirmed hospital admission for influenza in Maryland. We specify the date at which we are nowcasting, and the date with the final data for evaluation.
 
 ```{r set-params}
@@ -27,7 +43,7 @@ eval_date = "2025-03-21"
 
 ```
 
-Let's also load the relevant packages.
+Load the required packages.
 
 ```{r setup, include=FALSE}
 
@@ -40,13 +56,10 @@ library(epidatr)
 ```
 
 
-Moreover, we assume you have followed the first guide of this course, and have an API key ready for the DELPHI Epidata API.
 
-```{r epidatr_api, eval=FALSE}
-epidatr::get_api_key()
-```
+## Retrieve and Prepare Surveillance Data
 
-## Getting and transforming the data
+Use `epidatr::pub_covidcast()` to pull National Healthcare Safety Network (NHSN) hospital admission data for the selected disease and location. The data are returned with revision tracking (`issue`) that we rely on for nowcasting.
 
 ```{r pulling data}
 
@@ -69,42 +82,42 @@ epidatr::get_api_key()
     issues = "*"
   )
   
-  epidata_cleaned <- epidata %>% 
-    select(location = geo_value, reference_date = time_value, report_date = issue , confirm=value)
+  target_data <- epidata |>
+    select(
+      location = geo_value,
+      reference_date = time_value,
+      report_date = issue,
+      confirm = value
+    ) |>
+    enw_filter_report_dates(latest_date = eval_date) |>
+    enw_filter_reference_dates(latest_date = nowcast_date)
   
+    target_data$report_date %>% unique()
 ```
 Here we have transformed the data so it is in the format for epinowcast, with columns
  * `reference_date` the date of the observation, in this example the date of an incident influenza admission in a hospital
  * `report_date`: the date of report for a given set of observations by reference date
  * `confirm`: the total (i.e. cumulative) number of hospitalisations by reference date and report date.
   
-epinowcast provides convenient functions to filter a data in the right format. Let's keep only the data that concerns before our forecast date, and let's print the unique report dates
+
+Create two views of the data: the real-time version available on the nowcast date and the final version used for evaluation. This use very convenient filtering functions in epinowcast.  The epinowcast function `enw_latest_data()` filters observations to keep only the latest available reported total counts for each reference date.  The epinowcast function enw_filter_report_dates() will be used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
   
-```{r filtering}
-  target_data <- epidata_cleaned |>
-    enw_filter_report_dates(latest_date = eval_date) |>
-    enw_filter_reference_dates(latest_date = nowcast_date)
-  target_data$report_date %>% unique()
+```{r realtime-latest}
+observed_data <- enw_filter_report_dates(target_data, latest_date = nowcast_date)
+obs_by_reference <- enw_latest_data(observed_data)
+
+latest_data <- enw_latest_data(target_data) |>
+  enw_filter_reference_dates(latest_date = max(observed_data$reference_date))
 ```
+
+Visualise how the cumulative counts change after revisions.
+
 
 
 ## Data bookkeeping.
 
-We will now do some bookkeeping. The epinowcast function `enw_latest_data()` filters observations to keep only the latest available reported total counts for each reference date. And like we did above, the epinowcast function enw_filter_report_dates() will be used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
+We will now do some bookkeeping. And like we did above,
 
-```{r}
-latest_data <- enw_latest_data(target_data)
-
-observed_data <- enw_filter_report_dates( target_data, latest_date = nowcast_date)
-
-obs_data_by_reference_date <- enw_latest_data(observed_data)
-
-head(observed_data)
-
-# filter so observed_data and latest_data end on the same day.
-latest_data <- latest_data %>% enw_filter_reference_dates(latest_date = max(observed_data$reference_date))
-
-```
 
 Let's plot our two datasets, the red line shows the total number of confirmed admissions on each reference date, across all delays, using the data available at the nowcast date, whereas the blackline show the final value of the data.
 ``` {r}
