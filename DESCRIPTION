@@ -65,4 +65,6 @@ Remotes:
     cmu-delphi/epiprocess,
     cmu-delphi/epipredict,
     epinowcast/baselinenowcast
-Additional_repositories: https://epinowcast.r-universe.dev
+Additional_repositories:
+    https://epinowcast.r-universe.dev,
+    https://stan-dev.r-universe.dev
