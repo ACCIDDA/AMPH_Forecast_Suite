@@ -357,11 +357,11 @@ Evaluation of forecasts is critical for assessing model performance and for buil
 
 ```{r scoring-prep}
 
-target_data_plot <- readr::read_csv(
+scoring_target_data <- readr::read_csv(
   file.path("target-data", paste0("target-hospital-admissions-", new_target_data_date, ".csv")),
   show_col_types = FALSE)
 
-scoring_target_data <- target_data_plot %>%
+scoring_target_data <- scoring_target_data %>%
   filter(location %in% location,
          issue_date >= target_end_date + 28,
          target_end_date > "2022-09-01") %>%
@@ -370,7 +370,7 @@ scoring_target_data <- target_data_plot %>%
   epiprocess::as_epi_df(time_value = target_end_date)
 ```
 
-```{r scoring, eval=FALSE}
+```{r scoring, eval=TRUE}
 # Join forecasts with observations at (target_date, location)
 # and conform to scoringutils "forecast" structure.
 
@@ -403,8 +403,11 @@ forecast <- scoringutils::as_forecast_quantile(
 
 # Score (WIS, coverage, etc.)
 scores <- scoringutils::score(forecast)
+```
 
-scoringutils::summarise_scores(scores, by = "model")
+
+```{r, eval=TRUE}
+knitr::kable(scoringutils::summarise_scores(scores, by = "model"))
 
 ```
 
