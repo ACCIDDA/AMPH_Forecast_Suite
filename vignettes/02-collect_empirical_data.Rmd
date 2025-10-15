@@ -30,7 +30,6 @@ library(tidyverse)
 library(jsonlite)
 library(epidatr)
 library(epiprocess)
-library(usethis)
 ```
 
 
@@ -46,9 +45,6 @@ If the API key does not come, you can use this one until it comes: `04e7369e1541
 
 # Follow instructions about opening `.Renviron` file
 epidatr::save_api_key()
-
-# If that doesn't work:
-usethis::edit_r_environ(scope = "user")
 
 # Check that the API key is saved
 epidatr::get_api_key()
