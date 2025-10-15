@@ -1,5 +1,5 @@
 ---
-title: "AMPH 2025: Forecasting with Time Series Models"
+title: "Other: Introduction to versioning and nowcasting"
 output:
   html_document:
     toc: true
@@ -10,57 +10,45 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Set parameters
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
+```
+
+
+## Setup
+We will nowcast the confirmed hospital admission for influenza in Maryland. We specify the date at which we are nowcasting, and the date with the final data for evaluation.
 
 ```{r set-params}
 state_name <- "Maryland"
 geo_values <- "md"
-forecast_disease <- "rsv"
-nowcast_date = "2025-07-02"
-eval_date = "2025-09-21"
+forecast_disease <- "influenza"
+nowcast_date = "2025-02-10"
+eval_date = "2025-03-21"
+
 ```
 
-# Install packages
+Let's also load the relevant packages.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 
 library(AMPHForecastSuite)
-# needs: install.packages("lme4")
-#install.packages("epinowcast", repos = "https://epinowcast.r-universe.dev")
-# install_github("epinowcast/baselinenowcast")
-# or pak::pak(file.path("epinowcast", "baselinenowcast"))
 library(baselinenowcast)
 library(epinowcast)
-
-
-# Run `remotes::install_github("ACCIDDA/AMPH_Forecast_Suite")` if the package is not installed.
-
 library(tidyverse)
 library(ggplot2)
 library(epidatr)
 ```
 
 
-# Save and check API key
-
-1. Go to https://api.delphi.cmu.edu/epidata/admin/registration_form and register for a psuedo-anonymous account.
-
-2. Run the command below to save your API key in your `.Renviron` file. As it says in the prompt, add a line `DELPHI_EPIDATA_KEY=yourkeyhere` to your `.Renviron` file. Save and close the file, then restart R or RStudio. After restarting, run the command `epidatr::get_api_key()` to check that your API key is saved.
+Moreover, we assume you have followed the first guide of this course, and have an API key ready for the DELPHI Epidata API.
 
 ```{r epidatr_api, eval=FALSE}
-
-# Follow instructions about opening `.Renviron` file
-#epidatr::save_api_key()
-
-# Check that the API key is saved
 epidatr::get_api_key()
-
 ```
 
-# Pull directly with epidatr
+## Getting and transforming the data
 
-```{r}
+```{r pulling data}
 
   # Map disease names to NHSN signal names
   # Based on epidatr NHSN signals for respiratory diseases
@@ -83,15 +71,26 @@ epidatr::get_api_key()
   
   epidata_cleaned <- epidata %>% 
     select(location = geo_value, reference_date = time_value, report_date = issue , confirm=value)
-
+  
+```
+Here we have transformed the data so it is in the format for epinowcast, with columns
+ * `reference_date` the date of the observation, in this example the date of an incident influenza admission in a hospital
+ * `report_date`: the date of report for a given set of observations by reference date
+ * `confirm`: the total (i.e. cumulative) number of hospitalisations by reference date and report date.
+  
+epinowcast provides convenient functions to filter a data in the right format. Let's keep only the data that concerns before our forecast date, and let's print the unique report dates
+  
+```{r filtering}
   target_data <- epidata_cleaned |>
     enw_filter_report_dates(latest_date = eval_date) |>
     enw_filter_reference_dates(latest_date = nowcast_date)
-  epidata$issue %>% unique()
+  target_data$report_date %>% unique()
 ```
 
-The epinowcast function enw_latest_data() will be used to filter observations to the latest available reported total counts for each reference date. The epinowcast function enw_filter_report_dates() will be used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
 
+## Data bookkeeping.
+
+We will now do some bookkeeping. The epinowcast function `enw_latest_data()` filters observations to keep only the latest available reported total counts for each reference date. And like we did above, the epinowcast function enw_filter_report_dates() will be used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
 
 ```{r}
 latest_data <- enw_latest_data(target_data)
@@ -102,12 +101,12 @@ obs_data_by_reference_date <- enw_latest_data(observed_data)
 
 head(observed_data)
 
-# filder so observed_data and latest_data end on the same day.
+# filter so observed_data and latest_data end on the same day.
 latest_data <- latest_data %>% enw_filter_reference_dates(latest_date = max(observed_data$reference_date))
 
 ```
 
-The red line shows the total number of confirmed admissions on each reference date, across all delays, using the data available at the nowcast date, whereas the blackline show the final value of the data.
+Let's plot our two datasets, the red line shows the total number of confirmed admissions on each reference date, across all delays, using the data available at the nowcast date, whereas the blackline show the final value of the data.
 ``` {r}
 plot_data <- ggplot() +
   geom_line(
@@ -122,17 +121,17 @@ plot_data <- ggplot() +
   xlab("Reference date") +
   ylab(signal) +
   #scale_y_continuous(trans = "log10") +
-  xlim(as.Date("2025-05-01"), as.Date(nowcast_date)) 
+  xlim(as.Date("2024-11-01"), as.Date(nowcast_date)) 
   ggtitle("Comparing real-time and later observed cases")
 plot_data
 ```
+We see that some revision occurred ! Let's try to fix these.
 
 ## Preprocessing
 ``` {r}
 # Empirical data outside this delay window will not be used for training
-max_delay <- 3 # weeks
-
-n_training_volume <- 30*7 # days
+max_delay <- 4 # weeks
+n_training_volume <- 8*7 # days (30 weeks)
 ```
 
 Next we will use the epinowcast function, enw_filter_reference_dates() to filter to only include n_training_volume days of historical data, and the epinowcast function enw_latest_data() will be used to filter for the latest available reported total counts for each reference date. Finally to obtain the data we want to evaluate the forecasts against, we will use enw_filter_reference_dates() applied to the target_data, to filter it for only the n_training_volume days of historical data.
@@ -170,8 +169,6 @@ reporting_triangle <- reporting_triangle_df |>
   as.matrix()
 
 reporting_triangle[is.na(reporting_triangle)] <- 0
-
-
 
 
 #### code to plot:
@@ -279,7 +276,8 @@ plot_data <- point_nowcast_df |>
 plot_pt_nowcast <- ggplot(plot_data, aes(
   x = reference_date,
   y = count,
-  color = type
+  color = type,
+  linetype = type
 )) +
   geom_line() +
   scale_color_manual(values = c(
@@ -287,21 +285,45 @@ plot_pt_nowcast <- ggplot(plot_data, aes(
     "Final observed data" = "black",
     "Point nowcast" = "darkblue"
   )) +
+  scale_linetype_manual(values = c(
+    "Real-time data" = "dashed",
+    "Final observed data" = "dashed",
+    "Point nowcast" = "solid"
+  )) +
   theme_bw() +
   xlab("Reference date") +
   ylab("Confirmed admissions") +
-  scale_y_continuous(trans = "log10") +
+  #scale_y_continuous(trans = "log10") +
   ggtitle("Comparing real-time, nowcasted, and later observed cases") +
   theme(legend.position = "bottom") +
-  labs(color = "Type")
+  labs(color = "Type", linetype = "Type")
+plot_pt_nowcast
 ```
 
 
 ``` {r}
-plot_pt_nowcast
+
 ```
 
 ``` {r}
 # For uncertainty estimation, we will generate retrospective nowcast datasets with the most recent 50% of the reference times.
-n_retrospective_nowcasts <- as.integer(0.5 * n_training_volume) # days
+n_retrospective_nowcasts <- as.integer(0.5 * n_training_volume/7) # days
+trunc_rep_tri_list <- truncate_triangles(reporting_triangle,
+  n = n_retrospective_nowcasts
+)
+retro_rep_tri_list <- construct_triangles(trunc_rep_tri_list)
+```
+
+```{r}
+
+retro_pt_nowcast_mat_list <- fill_triangles(
+  retro_reporting_triangles = retro_rep_tri_list,
+  n = n_history_delay/7
+)
+disp_params <- estimate_uncertainty(
+  point_nowcast_matrices = retro_pt_nowcast_mat_list,
+  truncated_reporting_triangles = trunc_rep_tri_list,
+  retro_reporting_triangles = retro_rep_tri_list,
+  n = n_retrospective_nowcasts
+)
 ```
