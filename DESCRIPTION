@@ -47,7 +47,9 @@ Imports:
     epiprocess (>= 0.12.0.9999),
     data.table,
     EpiEstim,
-    epidatr
+    epidatr,
+    plotly,
+    patchwork
 Suggests:
     fable,
     fabletools,
