@@ -1,0 +1,448 @@
+---
+title: "Learn SIR Models and Basic Fitting"
+output: learnr::tutorial
+runtime: shiny_prerendered
+date: "2025-10-16"
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(deSolve)
+library(data.table)
+library(EpiEstim)
+library(tidyverse)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE)
+
+data_file <- fread("https://raw.githubusercontent.com/apwez/IDD_course/883be8b44cd4ccfa9dbbc1317802d665d1b27db0/Maryland_COVID19Data_IncidentCases.csv")
+
+data_file$Date <- mdy(data_file$Date)
+
+  # creating separate data objects for Baltimore city and Frederick county
+  # removing the leading 0s in each time series
+  balt_city <- data_file |>
+               select(Date, new_cases=Baltimore.City) |>
+               filter(Date >= as.Date("2020-03-17"))
+
+  fred_cty <- data_file |>
+              select(Date, new_cases=Frederick.County) |>
+              filter(Date >= as.Date("2020-03-22"))
+  
+  
+
+
+
+  
+```
+
+## Welcome
+This is a tutorial to construct a basic SIR model, simulate epidemic trajectories from this model, add interventions, and estimate model parameters from data. 
+
+### 
+
+## BASIC SIR model
+
+One of the most commonly studied models in infectious disease epidemiology is the class "SIR" model. This is a compartmental (mechanistic) model where individiuals begin as susceptible, become infected (and infectious), and then recover. Here we will go through writing simple R code to simulate, view the output, and modify the parameters of the model.
+ 
+Let $S$ be the fraction of individuals in the population who are susceptible, $I$ be the fraction infectious , and $R$ be recovered individuals. We assume that infection confers perfect immunity. 
+
+\begin{align*}
+&\frac{dS}{dt} = - \beta S I \\
+&\frac{dI}{dt} = \beta S I - \gamma I \\
+&\frac{dR}{dt} = \gamma I 
+\end{align*}
+
+In this model, $\beta$ describes the transmission rate - the rate per time that an infected individual infects others - which depends on both the frequency of contact with others and the probability of transmission per contact. The recovery rate, $\gamma$, is the probability an infectious individual recovers per day, and more intuitively $\frac{1}{\gamma}$ is the average duration of infection. The basic reproduction number is $R_0 = \frac{\beta}{\gamma}$. This models assumes mass action and equal transmission and recovery rates in all members of the population.
+
+```{r gen_time, echo = FALSE}
+question("The average duration of infection for a particular disease is 5 days. This means:",
+         answer("a) 20% recovers each day", message = 'there is another response that is also correct'),
+         answer("b) in a population of 1000, 20 recover each day", message = 'this would be 200 if all 1000 were infected'),
+         answer('c) for a second pathogen with the same beta, but gamma equaled 1/8 days, it would infect more people', message = 'there is another response that is also correct'),
+         answer("a and b", message = 'this is wrong'), 
+         answer('a and c', correct = TRUE),
+         answer('b and c', message = 'this is wrong'),
+         allow_retry = TRUE
+         
+)
+```
+
+###
+
+## Code to construct a SIR model 
+
+We can run code to construct this model as a series of differential equations. The 'sir_function' takes in the current values of all variables (y = S,I,R), the time (t), and the model parameters (_param_) and results the current rate of change of those values according to the differential equations : 
+
+```{r sir}
+sir_function <- function(t, y, param) {
+
+  # get parameters from param vector
+  beta = param["beta"]
+  gamma = param["gamma"]
+  
+  # get the states from state vector
+  S = y["S"]; I = y["I"]; R = y["R"]
+  
+  # compute the process flows
+  infection <- beta*S*I
+  recovery <- gamma*I
+  
+  # combine the flows for the relevant states
+  dSdt = -infection 
+  dIdt = +infection - recovery
+  dRdt = recovery
+  
+  # returning list of current system of eq for time t
+  return(list(c(dSdt, dIdt, dRdt)))
+}
+```
+
+```{r betaSI, echo = FALSE}
+question("Why does do we multiple beta times S and I?",
+         answer("because we need to reduce the number of susceptible individuals in this equation", message = 'the beta times S and I is about transmission' ),
+         answer("because the number who will get infected is impacted by the number who are susceptible", correct = TRUE),
+         answer("because otherwise we would infect too many individuals", message = 'without taking into account the susceptible, we do not actually know how many individuals will get infected'),
+         allow_retry = TRUE
+)
+```
+
+### 
+### Solving these equations
+
+We will introduce R code to numerically integrate the SIR model. Roughly, numerical integration is a method to take the model variables and the instantaneous rate of change at one point in time and use it to determine new values for the model variables after a very short timestep. It is extremely accurate and can be considered an "exact" solution to the equations. We will use a package called "deSolve".
+
+```{r solve_sir}
+# run_sir_model takes inputs
+#   beta: transmission parameter (rate of infectious contacts per unit time [per person if freq=FALSE])
+#   gamma: recovery rate, in 1/time units
+#   initial.state: named vector of initial S, I, R states (must be # individuals for density dependent)
+#   max.time: number of time units for which to run model
+#   freq.dependent: logical for whether to run density dependent (FALSE) or frequency dependent (TRUE) model
+run_sir_model <- function (beta, gamma, initial.state, max.time, freq.dependent = TRUE) {
+
+    # if frequency dependent model, divide beta by N = S + I + R = sum(initial.state), so that
+    # ds/dt = -beta*S*I/N
+    # if density dependent model, divide by 1
+    beta.divisor <- ifelse(freq.dependent == TRUE, 
+                           sum(initial.state), 
+                           1)
+    
+    # create param vector to pass to SIR system of equations
+    param <- c(beta = beta/beta.divisor, gamma = gamma)
+    
+    # create time vector across which to run model
+    # note by default the time step is 1 unit
+    times <- seq(0, max.time, 1)
+    
+    # solve the SIR system of equations for given times, parameters, initial conditions
+    sir.output <- deSolve::lsoda(initial.state, times, sir_function, param)
+    
+    # return the SIR output, matrix of time, S, I, R values
+    return(as.data.table(sir.output))
+}
+```
+
+
+```{r measles, echo = FALSE}
+question("For measles, if the duration of infection is 14 days, what value of beta would result in a basic reproduction ratio of R0 = 12",
+         answer('0.86', correct = TRUE),
+         answer('168'),
+         allow_retry = TRUE
+)
+```
+
+###
+## Running simulations with our model
+
+Now we can run some simulations of our model. Here we have an example:
+
+We can look at the model output using 'head()' and plot the output. Note we using `NA` in the first `plot` statement to return a blank plot, which we then populate using `lines`. You'll need to change the code below (pick the colors you'd like and plot I and R). 
+
+```{r test_plot, exercise = TRUE, exercise.eval = FALSE}
+test_output <- run_sir_model(beta = 1, gamma = 0.05,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365, freq.dependent = TRUE)
+head(test_output)
+
+N = test_output$S[1] + test_output$I[1] + test_output$R[1] ## total population size
+plot(NA, NA, xlim = c(min(test_output$time), max(test_output$time)), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
+lines(test_output$time, test_output$S, col = 'blue', lty = 1)
+legend('topright', legend = c('S'), col = c('blue'), pch = 16)
+```
+
+
+```{r r0, echo = FALSE}
+question("What is R0 for our model above?",
+         answer('20', correct = TRUE),
+         answer('0.5'),
+         allow_retry = TRUE
+)
+```
+
+Now you can try it yourself. Run two more simulations labeled: test_output_high_beta (beta = 2) and test_output_low_beta (beta = 0.5) using the different beta values listed. All other parameters and states should be the same as above. Plot the output from these simulations on the same plot (lty = 2, for test_output_high_beta); (lty = 3, for test_output_low_beta). Make sure you are using appropriate axis limits. You may want to truncate the axis (try using `xlim`) for better visualization. You'll need to change the code below. 
+
+
+```{r two_betas,  exercise = TRUE, exercise.eval = FALSE}
+test_output <- run_sir_model(beta = 1, gamma = 0.05,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
+# high beta SIR
+test_output_high_beta <- run_sir_model(beta = 1, gamma = 1,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
+
+# low beta SIR
+test_output_low_beta <- run_sir_model(beta = 1, gamma = 1,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
+
+N = test_output$S[1] + test_output$I[1] + test_output$R[1] ## total population size
+
+plot(NA, NA, xlim = c(min(test_output$time), 100), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
+# plotting original beta
+lines(test_output$time, test_output$S, col = 'blue', lty = 1)
+lines(test_output$time, test_output$I, col = 'red', lty = 1, lwd=2)
+lines(test_output$time, test_output$R, col = 'orange', lty = 1)
+# plotting high beta
+
+# plotting low beta
+
+# adding legend
+
+```
+
+
+How do these two epidemics differ? Why would a different beta value result in a different epidemic?
+
+Answer = Beta is the transmission coefficient, dictating the rate at which infectious contacts are made per unit time in the entire population. If beta increases, but the duration of infection (via gamma) stays the same, then each infected individual will be able to infect more others before recovering. The epidemic will spread faster and the final outbreak size will also be larger.   
+
+
+###
+
+## Adding in an intervention 
+Suppose there is a pathogen whose transmission can be approximated with an SIR model where $\beta$ = 3, $\gamma$ = 1/5. There is a new intervention in place that would reduce the transmissibility of the pathogen by half. Run two simulations (and plot the results) - one with the intervention and one without. What are the main differences between these two scenarios?  Justify which parameters and/or compartments you changed and why.   
+
+
+When the intervention is in place, we let $\beta_{int} = \frac{\beta}{2} = 1.5$. Note that the time axis is truncated to 100 days for better visualization. You'll need to change the code below. 
+
+
+```{r intervention, exercise = TRUE, exercise.eval = FALSE}
+
+# no intervention model
+out_no_int <- run_sir_model(beta = 3, gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0),  max.time = 365)
+
+# low beta SIR
+out_int <-  run_sir_model(beta = 3, gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0),  max.time = 365)
+
+N = out_no_int$S[1] + out_no_int$I[1] + out_no_int$R[1] ## total population size
+
+plot(NA, NA, xlim = c(0, 100), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
+# plotting no intervention
+
+# plotting intervention
+
+# adding legend
+legend('topright', legend = c('S', 'I', 'R', "intervention"), 
+       col = c('blue', 'red', 'orange', 'black'), 
+       lty=c(1,1,1,2), lwd=2)
+
+
+```
+
+###
+
+## Disease elimination
+
+How much would I have to reduce transmission to avoid an outbreak altogether? Remember that no outbreak will occur if $R_0 < 1$. Here, $R_0 = \frac{3}{0.2} = 15$ with no intervention. To get $R_0$ below 1, I need $\frac{\beta_{int}}{0.2} \leq 1\ \Rightarrow \beta_{int} \leq 0.2$. Therefore, I have to reduce $\beta$ by over 90\% (from 3 to 0.2) to avoid an outbreak.
+
+Let's look at outbreaks with 90\% and 95\% reductions in transmission. We'll just plot the $I$ compartment for simplicity. You'll need to change the code below. 
+
+```{r below1, exercise = TRUE, exercise.eval = FALSE}
+
+# no intervention model
+# no intervention model
+out_no_int <- run_sir_model(beta = 3, gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0),  max.time = 365)
+
+out90 <- run_sir_model(beta = 3*(1-1), gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
+
+out95 <- run_sir_model(beta = 3*(1-1), gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0), 
+                       max.time = 365)
+
+N = out90$S[1] + out90$I[1] + out90$R[1] ## total population size
+
+plot(NA, NA, xlim = c(min(out_no_int$time), max(out_no_int$time)), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
+# plotting no intervention
+# plotting 90% intervention
+# plotting 95% intervention
+# adding legend
+
+```
+
+
+
+###
+
+## Estimating Rt
+
+========================================================
+In this exercise, we will use the method of Cori et al., available in the `EpiEstim` package, to estimate the instantaneous reproductive number $R_t$ from publicly-available COVID-19 data. 
+
+Load and plot the provided data from Maryland. Specifically, make one plot for the number of reported cases by day in Baltimore City and one plot for the reported cases in Frederick county. Describe generally in which time periods it appears $R_t>1$ for each county [1-2 sentences]. Are there any data points which seem anomalous, and what might these do to your estimates? (We won't cover methods for removing/resolving these anomalies - just discuss what their impact might be.)
+
+You do not need to change the code below, but feel free to explore other locations too! 
+
+```{r reading_in_data, eval = TRUE}
+  # make sure you have saved the CSV on your computer
+  # you may need to change your working directory and/or specify the full path to the data file
+
+data_file <- read.csv("https://raw.githubusercontent.com/apwez/IDD_course/883be8b44cd4ccfa9dbbc1317802d665d1b27db0/Maryland_COVID19Data_IncidentCases.csv")
+
+data_file$Date <- mdy(data_file$Date)
+
+  # creating separate data objects for Baltimore city and Frederick county
+  # removing the leading 0s in each time series
+  balt_city <- data_file %>%
+               dplyr::select(Date, new_cases=Baltimore.City) %>%
+               filter(Date >= as.Date("2020-03-17"))
+
+  fred_cty <- data_file %>%
+              dplyr::select(Date, new_cases=Frederick.County) %>%
+              filter(Date >= as.Date("2020-03-22"))
+  
+  ## plotting epi curves for each
+  ggplot() +
+    geom_line(data=balt_city, aes(x=Date, y=new_cases), color="darkred") +
+    geom_line(data=fred_cty, aes(x=Date, y=new_cases), color="navyblue") +
+    scale_x_date(name="", breaks="2 weeks") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle=45, hjust=1, vjust=1))
+
+```
+
+Now we can use the following code to estimate $R_t$ for Baltimore City, and repeat the process for Frederick County. Plot the estimates for each with their 95\% CI (hint: try `geom_ribbon` if using ggplot, or `polygon` if using base R). Make sure to include a legend, labels, etc for your figure. Compare estimates from the two counties and how these align with the incidence data you plotted above. Edit the code to add a location of your choice for the same procedure! 
+
+```{r rt_est, exercise = TRUE, exercise.eval = FALSE, fig.width=6, fig.height=4}
+
+  # defining time windows (1 week) for smoothing estimation
+  t_start = seq(2, nrow(balt_city)-7)
+  t_end = t_start + 7
+  
+  # estimating for baltimore, using 7 day windows + 4d serial interval
+  balt_rt <- estimate_R(balt_city$new_cases, 
+                        method = 'parametric_si', 
+                        config = make_config(list(mean_si = 4, std_si = 4.75, t_start=t_start, t_end=t_end))) 
+
+  # summarizing Rt results
+  balt_df <- data.frame(date_start = balt_city$Date[t_start],
+                        est = balt_rt$R$`Mean(R)`,
+                        lower_ci = balt_rt$R$`Quantile.0.025(R)`,
+                        upper_ci=balt_rt$R$`Quantile.0.975(R)`) %>%
+             mutate(date = date_start + 3)
+  
+  # defining time windows (1 week) for smoothing estimation
+  t_start = seq(2, nrow(fred_cty)-7)
+  t_end = t_start + 7
+  
+  # estimating for Frederick county, using 7 day windows + 4d serial interval
+  fred_rt <- estimate_R(fred_cty$new_cases, 
+                        method = 'parametric_si', 
+                        config = make_config(list(mean_si = 4, std_si = 4.75, t_start=t_start, t_end=t_end))) 
+
+  # summarizing Rt results
+  fred_df <- data.frame(date_start = fred_cty$Date[t_start],
+                        est = fred_rt$R$`Mean(R)`,
+                        lower_ci = fred_rt$R$`Quantile.0.025(R)`,
+                        upper_ci=fred_rt$R$`Quantile.0.975(R)`) %>%
+             mutate(date = date_start + 3)
+  
+  # combining data from each county for plotting
+  plt_df <- balt_df %>%
+            mutate(county="Baltimore city") %>%
+            bind_rows(fred_df %>% mutate(county="Frederick county"))
+  
+  # plotting Rt for both counties
+  p1<- ggplot(plt_df, aes(x=date, y=est, ymin=lower_ci, ymax=upper_ci, color=county, fill=county)) +
+        geom_line() +
+        geom_ribbon(alpha=0.2, color=NA) +
+        geom_hline(yintercept = 1, linetype="dashed") +
+        theme_bw() +
+        theme(legend.position = "bottom")
+  p1
+  
+```
+
+
+We used an estimate of the serial interval above from an early paper [investigating cases in China before February 8, 2020](https://wwwnc.cdc.gov/eid/article/26/6/20-0357_article). This paper found a mean serial interval of 4 days, with a standard deviation of 4.75 days. Suppose you had data (e.g., like [this paper investigating cases in Lombardy, Italy](https://arxiv.org/pdf/2003.09320.pdf)) which indicates the mean serial interval is closer to 7 days. Assuming the same standard deviation (4.75 days), repeat the estimation process above for both locations. Create 1-2 plots to compare the two estimates from each county and discuss the differences [1-2 sentences].
+
+```{r longer_si, fig.width=6, fig.height=6, exercise = TRUE, exercise.eval = FALSE}
+
+  # defining time windows (1 week) for smoothing estimation
+  t_start = seq(2, nrow(balt_city)-7)
+  t_end = t_start + 7
+
+  # estimating for Baltimre, using 7 day windows + 7d serial interval
+  balt_rt_longsi <- estimate_R(balt_city$new_cases, 
+                        method = 'parametric_si', 
+                        config = make_config(list(mean_si = 1, std_si = 1, t_start=t_start, t_end=t_end))) 
+
+  balt_df_longsi <- data.frame(date_start = balt_city$Date[t_start],
+                               est = balt_rt_longsi$R$`Mean(R)`,
+                               lower_ci = balt_rt_longsi$R$`Quantile.0.025(R)`,
+                               upper_ci=balt_rt_longsi$R$`Quantile.0.975(R)`) %>%
+                    mutate(date = date_start + 3)
+  
+
+  # defining time windows (1 week) for smoothing estimation
+  t_start = seq(2, nrow(fred_cty)-7)
+  t_end = t_start + 7
+  fred_rt_longsi <- estimate_R(fred_cty$new_cases, 
+                          method = 'parametric_si', 
+                          config = make_config(list(mean_si = 1, std_si = 1, t_start=t_start, t_end=t_end))) 
+
+  # estimating for Frederick, using 7 day windows + 7d serial interval
+  fred_df_longsi <- data.frame(date_start = fred_cty$Date[t_start],
+                               est = fred_rt_longsi$R$`Mean(R)`,
+                               lower_ci = fred_rt_longsi$R$`Quantile.0.025(R)`,
+                               upper_ci=fred_rt_longsi$R$`Quantile.0.975(R)`) %>%
+                    mutate(date = date_start + 3)
+  
+  # combining data from each county for plotting
+  plt_df_longsi <- balt_df_longsi %>%
+                   mutate(county="Baltimore city") %>%
+                   bind_rows(fred_df_longsi %>% mutate(county="Frederick county"))
+  
+  # plotting Rt for both counties w 4d estimate
+  p2 <- ggplot(plt_df_longsi, aes(x=date, y=est, ymin=lower_ci, ymax=upper_ci, color=county, fill=county)) +
+          geom_line() +
+          geom_ribbon(alpha=0.2, color=NA) +
+          geom_hline(yintercept = 1, linetype="dashed") +
+          theme_bw() +
+          theme(legend.position = "bottom") 
+
+  cowplot::plot_grid(p1 + lims(y=c(0.4, 5.6)), p2 + lims(y=c(0.4, 5.6)), nrow=2, labels=c("SI=4d", "SI=7d"))
+  
+    # combining 4 + 7 day serial interval estimates
+  plt_comb <- plt_df_longsi %>%
+              rename(est_long = est,
+                     lower_ci_long = lower_ci,
+                     upper_ci_long = upper_ci) %>%
+              full_join(plt_df)
+
+  # creating scatterplots of 4d vs 7d serial interval estimates
+  p_est = ggplot(plt_comb) +
+        geom_point(aes(x=est, y=est_long), color="#7570B3", alpha=0.2) +
+        geom_abline(slope=1, intercept=0) +
+        labs(title="mean Rt", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
+        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
+        theme_bw()
+ 
+  p_lci = ggplot(plt_comb) +
+        geom_point(aes(x=lower_ci, y=lower_ci_long), color="#58d6a4", alpha=0.2) +
+        geom_abline(slope=1, intercept=0) +
+        labs(title="lower CI", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
+        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
+        theme_bw()
+    
+  p_uci = ggplot(plt_comb) +
+        geom_point(aes(x=upper_ci, y=upper_ci_long), color="#58aed6", alpha=0.2) +
+        geom_abline(slope=1, intercept=0) +
+        labs(title="upper CI", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
+        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
+        theme_bw()
+  
+  cowplot::plot_grid(p_lci, p_est, p_uci, nrow=1)
+  
+```
+

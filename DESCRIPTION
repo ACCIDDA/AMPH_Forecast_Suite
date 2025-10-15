@@ -17,6 +17,7 @@ RoxygenNote: 7.3.2
 Depends: 
     gitcreds,
     jsonlite,
+    learnr,
     R (>= 3.5.0),
     remotes,
     scales,
@@ -43,7 +44,9 @@ Imports:
     hubEnsembles,
     scoringutils,
     epipredict (>= 0.2.1),
-    epiprocess (>= 0.12.0.9999)
+    epiprocess (>= 0.12.0.9999),
+    data.table,
+    EpiEstim
 Suggests:
     fable,
     fabletools,
