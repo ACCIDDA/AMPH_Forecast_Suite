@@ -8,11 +8,13 @@ date: "2025-10-16"
 ```{r setup, include=FALSE, warning=FALSE}
 library(AMPHForecastSuite)
 library(learnr)
+library(ggplot2)
+library(patchwork)
 library(deSolve)
 library(data.table)
 library(EpiEstim)
 library(tidyverse)
-library(lubridate)
+
 knitr::opts_chunk$set(echo = TRUE)
 
 data("COVIDMD")
@@ -199,16 +201,22 @@ question("For measles, if the duration of infection is 14 days, what value of be
 
 Now we can run some simulations of our model. Here we have an example:
 
-We can look at the model output using 'head()' and plot the output. Note we using `NA` in the first `plot` statement to return a blank plot, which we then populate using `lines`. You'll need to change the code below (pick the colors you'd like and plot I and R). 
+We can look at the model output using 'head()' and plot the output. Try updating the code below to show more of the system (e.g. pick the colors you'd like and plot I and R). 
 
 ```{r test_plot, exercise = TRUE, exercise.eval = FALSE}
-test_output <- run_sir_model(beta = 1, gamma = 0.05,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365, freq.dependent = TRUE)
-head(test_output)
+test_output <- run_sir_model(
+    beta = 1, gamma = 0.05,
+    initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365,
+    freq.dependent = TRUE
+)
 
-N = test_output$S[1] + test_output$I[1] + test_output$R[1] ## total population size
-plot(NA, NA, xlim = c(min(test_output$time), max(test_output$time)), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
-lines(test_output$time, test_output$S, col = 'blue', lty = 1)
-legend('topright', legend = c('S'), col = c('blue'), pch = 16)
+p <- ggplot(test_output) + aes(x = time) +
+    geom_line(aes(y = S, color = "S")) +
+    scale_y_continuous("Proportion", lim = c(0, 1)) +
+    scale_color_manual("Compartment", values = c(S = "blue")) +
+    theme_bw()
+
+print(p)
 ```
 
 
@@ -225,24 +233,26 @@ Now you can try it yourself. Run two more simulations labeled: test_output_high_
 
 ```{r two_betas,  exercise = TRUE, exercise.eval = FALSE}
 test_output <- run_sir_model(beta = 1, gamma = 0.05,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
+
 # high beta SIR
 test_output_high_beta <- run_sir_model(beta = 1, gamma = 1,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
 
 # low beta SIR
 test_output_low_beta <- run_sir_model(beta = 1, gamma = 1,  initial.state = c(S = 0.999, I = 0.001, R = 0), max.time = 365)
 
-N = test_output$S[1] + test_output$I[1] + test_output$R[1] ## total population size
+p_orig <- ggplot(test_output) + aes(x = time) +
+    geom_line(aes(y = S, color = "S")) +
+    geom_line(aes(y = I, color = "I")) +
+    geom_line(aes(y = R, color = "R")) +
+    scale_y_continuous("Proportion", lim = c(0, 1)) +
+    scale_color_manual("Compartment", values = c(S = "blue", I = "red", R = "orange")) +
+    theme_bw()
 
-plot(NA, NA, xlim = c(min(test_output$time), 100), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
-# plotting original beta
-lines(test_output$time, test_output$S, col = 'blue', lty = 1)
-lines(test_output$time, test_output$I, col = 'red', lty = 1, lwd=2)
-lines(test_output$time, test_output$R, col = 'orange', lty = 1)
+print(p_orig)
+
 # plotting high beta
 
 # plotting low beta
-
-# adding legend
 
 ```
 
@@ -269,18 +279,11 @@ out_no_int <- run_sir_model(beta = 3, gamma = 1/5,  initial.state = c(S = 0.999,
 # low beta SIR
 out_int <-  run_sir_model(beta = 3, gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0),  max.time = 365)
 
-N = out_no_int$S[1] + out_no_int$I[1] + out_no_int$R[1] ## total population size
-
-plot(NA, NA, xlim = c(0, 100), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
 # plotting no intervention
 
 # plotting intervention
 
 # adding legend
-legend('topright', legend = c('S', 'I', 'R', "intervention"), 
-       col = c('blue', 'red', 'orange', 'black'), 
-       lty=c(1,1,1,2), lwd=2)
-
 
 ```
 
@@ -303,9 +306,6 @@ out90 <- run_sir_model(beta = 3*(1-1), gamma = 1/5,  initial.state = c(S = 0.999
 out95 <- run_sir_model(beta = 3*(1-1), gamma = 1/5,  initial.state = c(S = 0.999, I = 0.001, R = 0), 
                        max.time = 365)
 
-N = out90$S[1] + out90$I[1] + out90$R[1] ## total population size
-
-plot(NA, NA, xlim = c(min(out_no_int$time), max(out_no_int$time)), ylim = c(0,N), xlab = 'time', ylab = 'Proportion')
 # plotting no intervention
 # plotting 90% intervention
 # plotting 95% intervention
@@ -341,13 +341,14 @@ fred_cty <- COVIDMD |>
           filter(Date >= as.Date("2020-03-22"))
   
   ## plotting epi curves for each
-  ggplot() +
+p <- ggplot() +
     geom_line(data=balt_city, aes(x=Date, y=new_cases), color="darkred") +
     geom_line(data=fred_cty, aes(x=Date, y=new_cases), color="navyblue") +
     scale_x_date(name="", breaks="2 weeks") +
     theme_bw() +
     theme(axis.text.x = element_text(angle=45, hjust=1, vjust=1))
 
+print(p)
 ```
 
 Now we can use the following code to estimate $R_t$ for Baltimore City, and repeat the process for Frederick County. Plot the estimates for each with their 95\% CI (hint: try `geom_ribbon` if using ggplot, or `polygon` if using base R). Make sure to include a legend, labels, etc for your figure. Compare estimates from the two counties and how these align with the incidence data you plotted above. Edit the code to add a location of your choice for the same procedure! 
@@ -392,14 +393,13 @@ Now we can use the following code to estimate $R_t$ for Baltimore City, and repe
             bind_rows(fred_df |> mutate(county="Frederick county"))
   
   # plotting Rt for both counties
-  p1<- ggplot(plt_df, aes(x=date, y=est, ymin=lower_ci, ymax=upper_ci, color=county, fill=county)) +
+  p1 <- ggplot(plt_df, aes(x=date, y=est, ymin=lower_ci, ymax=upper_ci, color=county, fill=county)) +
         geom_line() +
         geom_ribbon(alpha=0.2, color=NA) +
         geom_hline(yintercept = 1, linetype="dashed") +
-        theme_bw() +
-        theme(legend.position = "bottom")
-  p1
-  
+        theme_bw()
+
+print(p1)
 ```
 
 
@@ -411,10 +411,10 @@ We used an estimate of the serial interval above from an early paper [investigat
   t_start = seq(2, nrow(balt_city)-7)
   t_end = t_start + 7
 
-  # estimating for Baltimre, using 7 day windows + 7d serial interval
+  # estimating for Baltimore, using 7 day windows + 7d serial interval
   balt_rt_longsi <- estimate_R(balt_city$new_cases, 
                         method = 'parametric_si', 
-                        config = make_config(list(mean_si = 1, std_si = 1, t_start=t_start, t_end=t_end))) 
+                        config = make_config(list(mean_si = 7, std_si = 4.75, t_start=t_start, t_end=t_end))) 
 
   balt_df_longsi <- data.frame(date_start = balt_city$Date[t_start],
                                est = balt_rt_longsi$R$`Mean(R)`,
@@ -428,7 +428,7 @@ We used an estimate of the serial interval above from an early paper [investigat
   t_end = t_start + 7
   fred_rt_longsi <- estimate_R(fred_cty$new_cases, 
                           method = 'parametric_si', 
-                          config = make_config(list(mean_si = 1, std_si = 1, t_start=t_start, t_end=t_end))) 
+                          config = make_config(list(mean_si = 7, std_si = 4.75, t_start=t_start, t_end=t_end))) 
 
   # estimating for Frederick, using 7 day windows + 7d serial interval
   fred_df_longsi <- data.frame(date_start = fred_cty$Date[t_start],
@@ -450,8 +450,9 @@ We used an estimate of the serial interval above from an early paper [investigat
           theme_bw() +
           theme(legend.position = "bottom") 
 
-  cowplot::plot_grid(p1 + lims(y=c(0.4, 5.6)), p2 + lims(y=c(0.4, 5.6)), nrow=2, labels=c("SI=4d", "SI=7d"))
-  
+p1and2 <- (p1 + p2)
+print(p1and2)
+
     # combining 4 + 7 day serial interval estimates
   plt_comb <- plt_df_longsi |>
               rename(est_long = est,
@@ -463,25 +464,30 @@ We used an estimate of the serial interval above from an early paper [investigat
   p_est = ggplot(plt_comb) +
         geom_point(aes(x=est, y=est_long), color="#7570B3", alpha=0.2) +
         geom_abline(slope=1, intercept=0) +
-        labs(title="mean Rt", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
         lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
         theme_bw()
  
   p_lci = ggplot(plt_comb) +
         geom_point(aes(x=lower_ci, y=lower_ci_long), color="#58d6a4", alpha=0.2) +
         geom_abline(slope=1, intercept=0) +
-        labs(title="lower CI", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
-        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
         theme_bw()
     
   p_uci = ggplot(plt_comb) +
         geom_point(aes(x=upper_ci, y=upper_ci_long), color="#58aed6", alpha=0.2) +
         geom_abline(slope=1, intercept=0) +
-        labs(title="upper CI", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
-        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
         theme_bw()
+
+#        labs(title="mean Rt", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
   
-  cowplot::plot_grid(p_lci, p_est, p_uci, nrow=1)
   
+#        labs(title="lower CI", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
+#        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
+
+#        labs(title="upper CI", x="estimate (serial interval=4 days)", y="estimate (serial interval=7 days)") +
+#        lims(x=c(0.5, 3), y=c(0.4, 5.6)) +
+  
+  
+p_all <- (p_lci + p_est + p_uci)
+print(p_all)
 ```
 
