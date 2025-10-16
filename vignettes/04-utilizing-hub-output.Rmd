@@ -363,7 +363,7 @@ scoring_target_data <- readr::read_csv(
 
 scoring_target_data <- scoring_target_data %>%
   filter(location %in% location,
-         issue_date >= target_end_date + 28,
+         issue_date >= target_end_date,
          target_end_date > "2022-09-01") %>%
   select(geo_value = location, target_end_date, value = observation) %>%
   drop_na(value) %>%
@@ -379,7 +379,7 @@ scoring_df <- dplyr::left_join(
   scoring_target_data %>%
     dplyr::rename(observation = value,
                   target_date = time_value) %>%
-    mutate(location_name = "Maryland") %>%
+    mutate(location_name = loc) %>%
     select(-geo_value),
   by = c("target_date", "location_name"),
   relationship = "many-to-one"
