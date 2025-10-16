@@ -81,7 +81,8 @@ influenza in Maryland and illustrate how to: - retrieve revision-aware
 surveillance data, - build a reporting triangle, - estimate a reporting
 delay distribution, and - generate a deterministic point nowcast that
 corrects for under-reporting.</p>
-<p>We repeat these steps with TOODO</p>
+<p>We repeat these steps with data from the baselinenowcast
+documentation.</p>
 </div>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
@@ -139,8 +140,8 @@ and location. The data are returned with revision tracking
 <span>      report_date <span class="op">=</span> <span class="va">issue</span>,</span>
 <span>      confirm <span class="op">=</span> <span class="va">value</span></span>
 <span>    <span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>    <span class="fu">enw_filter_report_dates</span><span class="op">(</span>latest_date <span class="op">=</span> <span class="va">eval_date</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>    <span class="fu">enw_filter_reference_dates</span><span class="op">(</span>latest_date <span class="op">=</span> <span class="va">nowcast_date</span><span class="op">)</span></span>
+<span>    <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_report_dates.html" class="external-link">enw_filter_report_dates</a></span><span class="op">(</span>latest_date <span class="op">=</span> <span class="va">eval_date</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span>latest_date <span class="op">=</span> <span class="va">nowcast_date</span><span class="op">)</span></span>
 <span>  </span>
 <span>    <span class="va">target_data</span><span class="op">$</span><span class="va">report_date</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##  [1] "2024-11-17" "2024-11-24" "2024-12-01" "2024-12-08" "2024-12-15"</span></span>
@@ -172,23 +173,24 @@ report date.</p>
 <p>Create two views of the data: the real-time version available on the
 nowcast date and the final version used for evaluation. This use very
 convenient filtering functions in epinowcast. The epinowcast function
-<code>enw_latest_data()</code> filters observations to keep only the
-latest available reported total counts for each reference date. The
-epinowcast function <code>enw_filter_report_dates()</code> is used to
-create a truncated dataset for generating a retrospective nowcast, using
-the data that would have been available as of the nowcast date.</p>
+<code><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">epinowcast::enw_latest_data()</a></code> filters observations to keep
+only the latest available reported total counts for each reference date.
+The epinowcast function
+<code><a href="https://package.epinowcast.org/reference/enw_filter_report_dates.html" class="external-link">epinowcast::enw_filter_report_dates()</a></code> is used to create a
+truncated dataset for generating a retrospective nowcast, using the data
+that would have been available as of the nowcast date.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu">enw_filter_report_dates</span><span class="op">(</span><span class="va">target_data</span>, latest_date <span class="op">=</span> <span class="va">nowcast_date</span><span class="op">)</span></span>
-<span><span class="va">obs_by_reference</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">observed_data</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_report_dates.html" class="external-link">enw_filter_report_dates</a></span><span class="op">(</span><span class="va">target_data</span>, latest_date <span class="op">=</span> <span class="va">nowcast_date</span><span class="op">)</span></span>
+<span><span class="va">obs_by_reference</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">observed_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">latest_data</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">target_data</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">enw_filter_reference_dates</span><span class="op">(</span>latest_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">observed_data</span><span class="op">$</span><span class="va">reference_date</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">latest_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">target_data</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span>latest_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">observed_data</span><span class="op">$</span><span class="va">reference_date</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Let’s plot our two datasets, the red line shows the total number of
 confirmed admissions on each reference date, across all delays, using
 the data available at the nowcast date, whereas the blackline show the
 final value of the data.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">obs_data_by_reference_date</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">observed_data</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">obs_data_by_reference_date</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">observed_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
@@ -227,21 +229,22 @@ delays.</p>
 <span><span class="va">max_delay</span> <span class="op">&lt;-</span> <span class="fl">4</span> <span class="co"># weeks</span></span>
 <span><span class="va">n_training_volume</span> <span class="op">&lt;-</span> <span class="fl">8</span><span class="op">*</span><span class="fl">7</span> <span class="co"># days (30 weeks)</span></span></code></pre></div>
 <p>Next we will use the epinowcast function,
-<code>enw_filter_reference_dates()</code> to filter to only include
-n_training_volume days of historical data, and the epinowcast function
-<code>enw_latest_data()</code> will be used to filter for the latest
-available reported total counts for each reference date. Finally to
-obtain the data we want to evaluate the forecasts against, we will use
-enw_filter_reference_dates() applied to the target_data, to filter it
-for only the n_training_volume days of historical data.</p>
+<code><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">epinowcast::enw_filter_reference_dates()</a></code> to filter to only
+include n_training_volume days of historical data, and the epinowcast
+function <code><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">epinowcast::enw_latest_data()</a></code> will be used to
+filter for the latest available reported total counts for each reference
+date. Finally to obtain the data we want to evaluate the forecasts
+against, we will use epinowcast::enw_filter_reference_dates() applied to
+the target_data, to filter it for only the n_training_volume days of
+historical data.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">training_data</span> <span class="op">&lt;-</span> <span class="fu">enw_filter_reference_dates</span><span class="op">(</span><span class="va">observed_data</span>, include_days <span class="op">=</span> <span class="va">n_training_volume</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">training_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span><span class="va">observed_data</span>, include_days <span class="op">=</span> <span class="va">n_training_volume</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">latest_training_data</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">training_data</span><span class="op">)</span></span>
+<span><span class="va">latest_training_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">training_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">eval_data</span> <span class="op">&lt;-</span> <span class="fu">enw_filter_reference_dates</span><span class="op">(</span><span class="va">latest_data</span>, include_days <span class="op">=</span> <span class="va">n_training_volume</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">eval_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span><span class="va">latest_data</span>, include_days <span class="op">=</span> <span class="va">n_training_volume</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pobs</span> <span class="op">&lt;-</span> <span class="fu">enw_preprocess_data</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">pobs</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_preprocess_data.html" class="external-link">enw_preprocess_data</a></span><span class="op">(</span></span>
 <span>  obs <span class="op">=</span> <span class="va">training_data</span>,</span>
 <span>  max_delay <span class="op">=</span> <span class="va">max_delay</span><span class="op">+</span><span class="fl">2</span>,</span>
 <span>  timestep<span class="op">=</span><span class="st">"week"</span>,</span>
@@ -316,7 +319,7 @@ distribution and reserve the remaining weeks for evaluation.</p>
 <code class="sourceCode R"><span><span class="co"># most recent 50% of the reference times for delay estimation</span></span>
 <span><span class="va">n_history_delay</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fl">0.5</span> <span class="op">*</span> <span class="va">n_training_volume</span><span class="op">)</span> <span class="co"># days</span></span>
 <span></span>
-<span><span class="va">delay_pmf</span> <span class="op">&lt;-</span> <span class="fu">estimate_delay</span><span class="op">(</span></span>
+<span><span class="va">delay_pmf</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/estimate_delay.html" class="external-link">estimate_delay</a></span><span class="op">(</span></span>
 <span>  reporting_triangle <span class="op">=</span> <span class="va">reporting_triangle</span>,</span>
 <span>  max_delay <span class="op">=</span> <span class="va">max_delay</span>,</span>
 <span>  n <span class="op">=</span> <span class="va">n_history_delay</span><span class="op">/</span><span class="fl">7</span></span>
@@ -353,7 +356,7 @@ distribution and reserve the remaining weeks for evaluation.</p>
 <h2 id="apply-the-delay-to-generate-a-point-nowcast">Apply the delay to generate a point nowcast<a class="anchor" aria-label="anchor" href="#apply-the-delay-to-generate-a-point-nowcast"></a>
 </h2>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">point_nowcast_matrix</span> <span class="op">&lt;-</span> <span class="fu">apply_delay</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">point_nowcast_matrix</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/apply_delay.html" class="external-link">apply_delay</a></span><span class="op">(</span></span>
 <span>  reporting_triangle <span class="op">=</span> <span class="va">reporting_triangle</span>,</span>
 <span>  delay_pmf <span class="op">=</span> <span class="va">delay_pmf</span></span>
 <span><span class="op">)</span></span>
@@ -425,9 +428,9 @@ Germany Nowcasting Hub).</p>
 <h2 id="next-steps">Next Steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
 <ul>
-<li>Use <code>estimate_and_apply_uncertainty()</code> to obtain
-probabilistic nowcast intervals if you need calibrated uncertainty
-estimates.</li>
+<li>Use <code><a href="https://baselinenowcast.epinowcast.org/reference/estimate_and_apply_uncertainty.html" class="external-link">baselinenowcast::estimate_and_apply_uncertainty()</a></code>
+to obtain probabilistic nowcast intervals if you need calibrated
+uncertainty estimates.</li>
 <li>Adjust the training window (<code>n_training_weeks</code>) or
 <code>max_delay</code> to match the reporting dynamics of other diseases
 or locations.</li>
@@ -456,13 +459,13 @@ exclude all reference dates and report dates from before that date.
 <code class="sourceCode R"><span><span class="va">nowcast_date</span> <span class="op">&lt;-</span> <span class="st">"2021-08-01"</span></span>
 <span><span class="va">eval_date</span> <span class="op">&lt;-</span> <span class="st">"2021-10-01"</span></span>
 <span></span>
-<span><span class="va">target_data</span> <span class="op">&lt;-</span> <span class="va">germany_covid19_hosp</span><span class="op">[</span><span class="va">location</span> <span class="op">==</span> <span class="st">"DE"</span><span class="op">]</span><span class="op">[</span><span class="va">age_group</span> <span class="op">==</span> <span class="st">"00+"</span><span class="op">]</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">enw_filter_report_dates</span><span class="op">(</span>latest_date <span class="op">=</span> <span class="va">eval_date</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">enw_filter_reference_dates</span><span class="op">(</span></span>
+<span><span class="va">target_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="va"><a href="https://package.epinowcast.org/reference/germany_covid19_hosp.html" class="external-link">germany_covid19_hosp</a></span><span class="op">[</span><span class="va">location</span> <span class="op">==</span> <span class="st">"DE"</span><span class="op">]</span><span class="op">[</span><span class="va">age_group</span> <span class="op">==</span> <span class="st">"00+"</span><span class="op">]</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_report_dates.html" class="external-link">enw_filter_report_dates</a></span><span class="op">(</span>latest_date <span class="op">=</span> <span class="va">eval_date</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span></span>
 <span>    latest_date <span class="op">=</span> <span class="va">nowcast_date</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="va">latest_data</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">target_data</span><span class="op">)</span></span>
-<span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu">enw_filter_report_dates</span><span class="op">(</span></span>
+<span><span class="va">latest_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">target_data</span><span class="op">)</span></span>
+<span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_report_dates.html" class="external-link">enw_filter_report_dates</a></span><span class="op">(</span></span>
 <span>  <span class="va">target_data</span>,</span>
 <span>  latest_date <span class="op">=</span> <span class="va">nowcast_date</span></span>
 <span><span class="op">)</span></span>
@@ -479,7 +482,7 @@ exclude all reference dates and report dates from before that date.
 <details><summary>
 Click to expand code to create the plot of the latest data
 </summary><div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">obs_data_by_reference_date</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">observed_data</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">obs_data_by_reference_date</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">observed_data</span><span class="op">)</span></span>
 <span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="va">obs_data_by_reference_date</span>,</span>
@@ -506,17 +509,17 @@ Click to expand code to create the plot of the latest data
 <span><span class="va">n_training_volume</span> <span class="op">&lt;-</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">max_delay</span></span>
 <span><span class="va">n_history_delay</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fl">0.5</span> <span class="op">*</span> <span class="va">n_training_volume</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">training_data</span> <span class="op">&lt;-</span> <span class="fu">enw_filter_reference_dates</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">training_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span></span>
 <span>  <span class="va">observed_data</span>,</span>
 <span>  include_days <span class="op">=</span> <span class="va">n_training_volume</span> <span class="op">-</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">latest_training_data</span> <span class="op">&lt;-</span> <span class="fu">enw_latest_data</span><span class="op">(</span><span class="va">training_data</span><span class="op">)</span></span>
-<span><span class="va">eval_data</span> <span class="op">&lt;-</span> <span class="fu">enw_filter_reference_dates</span><span class="op">(</span></span>
+<span><span class="va">latest_training_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_latest_data.html" class="external-link">enw_latest_data</a></span><span class="op">(</span><span class="va">training_data</span><span class="op">)</span></span>
+<span><span class="va">eval_data</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_filter_reference_dates.html" class="external-link">enw_filter_reference_dates</a></span><span class="op">(</span></span>
 <span>  <span class="va">latest_data</span>,</span>
 <span>  include_days <span class="op">=</span> <span class="va">n_training_volume</span> <span class="op">-</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pobs</span> <span class="op">&lt;-</span> <span class="fu">enw_preprocess_data</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">pobs</span> <span class="op">&lt;-</span> <span class="fu">epinowcast</span><span class="fu">::</span><span class="fu"><a href="https://package.epinowcast.org/reference/enw_preprocess_data.html" class="external-link">enw_preprocess_data</a></span><span class="op">(</span></span>
 <span>  obs <span class="op">=</span> <span class="va">training_data</span>,</span>
 <span>  max_delay <span class="op">=</span> <span class="va">max_delay</span> <span class="op">+</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span>
@@ -597,7 +600,7 @@ Click to expand code to create the plot of the delay distribution
 <h3 id="generate-nowcast-with-delay">Generate nowcast with delay<a class="anchor" aria-label="anchor" href="#generate-nowcast-with-delay"></a>
 </h3>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">point_nowcast_matrix</span> <span class="op">&lt;-</span> <span class="fu">apply_delay</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">point_nowcast_matrix</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/apply_delay.html" class="external-link">apply_delay</a></span><span class="op">(</span></span>
 <span>  reporting_triangle <span class="op">=</span> <span class="va">reporting_triangle</span>,</span>
 <span>  delay_pmf <span class="op">=</span> <span class="va">delay_pmf</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -656,24 +659,24 @@ datasets with the most recent 50% of the reference times.</p>
 <code class="sourceCode R"><span><span class="va">n_retrospective_nowcasts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fl">0.5</span> <span class="op">*</span> <span class="va">n_training_volume</span><span class="op">)</span></span>
 <span></span>
 <span></span>
-<span><span class="va">trunc_rep_tri_list</span> <span class="op">&lt;-</span> <span class="fu">truncate_triangles</span><span class="op">(</span><span class="va">reporting_triangle</span>,</span>
+<span><span class="va">trunc_rep_tri_list</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/truncate_triangles.html" class="external-link">truncate_triangles</a></span><span class="op">(</span><span class="va">reporting_triangle</span>,</span>
 <span>  n <span class="op">=</span> <span class="va">n_retrospective_nowcasts</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">retro_rep_tri_list</span> <span class="op">&lt;-</span> <span class="fu">construct_triangles</span><span class="op">(</span><span class="va">trunc_rep_tri_list</span><span class="op">)</span></span>
+<span><span class="va">retro_rep_tri_list</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/construct_triangles.html" class="external-link">construct_triangles</a></span><span class="op">(</span><span class="va">trunc_rep_tri_list</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">retro_pt_nowcast_mat_list</span> <span class="op">&lt;-</span> <span class="fu">fill_triangles</span><span class="op">(</span></span>
+<span><span class="va">retro_pt_nowcast_mat_list</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/fill_triangles.html" class="external-link">fill_triangles</a></span><span class="op">(</span></span>
 <span>  retro_reporting_triangles <span class="op">=</span> <span class="va">retro_rep_tri_list</span>,</span>
 <span>  n <span class="op">=</span> <span class="va">n_history_delay</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">disp_params</span> <span class="op">&lt;-</span> <span class="fu">estimate_uncertainty</span><span class="op">(</span></span>
+<span><span class="va">disp_params</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/estimate_uncertainty.html" class="external-link">estimate_uncertainty</a></span><span class="op">(</span></span>
 <span>  point_nowcast_matrices <span class="op">=</span> <span class="va">retro_pt_nowcast_mat_list</span>,</span>
 <span>  truncated_reporting_triangles <span class="op">=</span> <span class="va">trunc_rep_tri_list</span>,</span>
 <span>  retro_reporting_triangles <span class="op">=</span> <span class="va">retro_rep_tri_list</span>,</span>
 <span>  n <span class="op">=</span> <span class="va">n_retrospective_nowcasts</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nowcast_draws_df</span> <span class="op">&lt;-</span> <span class="fu">sample_nowcasts</span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">nowcast_draws_df</span> <span class="op">&lt;-</span> <span class="fu">baselinenowcast</span><span class="fu">::</span><span class="fu"><a href="https://baselinenowcast.epinowcast.org/reference/sample_nowcasts.html" class="external-link">sample_nowcasts</a></span><span class="op">(</span></span>
 <span>  <span class="va">point_nowcast_matrix</span>, <span class="va">reporting_triangle</span>,</span>
 <span>  uncertainty_params <span class="op">=</span> <span class="va">disp_params</span>,</span>
 <span>  draws <span class="op">=</span> <span class="fl">100</span></span>
