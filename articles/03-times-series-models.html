@@ -352,7 +352,7 @@ horizons of 7, 14, 21, and 28 days ahead (i.e., 1 to 4 weeks ahead).</p>
 <span>      args_list <span class="op">=</span> <span class="fu"><a href="https://cmu-delphi.github.io/epipredict/reference/arx_args_list.html" class="external-link">arx_args_list</a></span><span class="op">(</span></span>
 <span>        lags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">7</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>        ahead <span class="op">=</span> <span class="va">days_ahead</span>,</span>
-<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">.05</span>, <span class="fl">.95</span>, <span class="fl">.05</span><span class="op">)</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span><span class="op">)</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>        nonneg <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
@@ -431,7 +431,7 @@ climatological model to the data. We specify a forecast horizon of 7,
 <span>  args_list <span class="op">=</span> <span class="fu"><a href="https://cmu-delphi.github.io/epipredict/reference/climate_args_list.html" class="external-link">climate_args_list</a></span><span class="op">(</span></span>
 <span>    forecast_horizon <span class="op">=</span> <span class="va">forecast_horizon_wks</span>,</span>
 <span>    time_type <span class="op">=</span> <span class="st">"week"</span>,</span>
-<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">.05</span>, <span class="fl">.95</span>, <span class="fl">.05</span><span class="op">)</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span><span class="op">)</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>    center_method <span class="op">=</span> <span class="st">"mean"</span>,</span>
 <span>    quantile_by_key <span class="op">=</span> <span class="st">"geo_value"</span>,</span>
 <span>    forecast_date <span class="op">=</span> <span class="va">reference_date</span>,</span>
@@ -462,7 +462,7 @@ Climate model fit and forecast
 </h4>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Transform to hubVerse format</span></span>
-<span><span class="va">hub_forecast</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/trans_epipredclim_hv.html">trans_epipredclim_hv</a></span><span class="op">(</span>fc_output <span class="op">=</span> <span class="va">climate_forecast</span>,</span>
+<span><span class="va">data_fc_climate_epipred</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/trans_epipredclim_hv.html">trans_epipredclim_hv</a></span><span class="op">(</span>fc_output <span class="op">=</span> <span class="va">climate_forecast</span>,</span>
 <span>                                     model_name <span class="op">=</span> <span class="va">model_name</span>,</span>
 <span>                                     target <span class="op">=</span> <span class="va">target</span>,</span>
 <span>                                     reference_date <span class="op">=</span> <span class="va">reference_date</span>,</span>
@@ -471,7 +471,7 @@ Climate model fit and forecast
 <span><span class="co">## Save data file</span></span>
 <span><span class="co">#' -- this will have validation build in for fluid workflow eventually.</span></span>
 <span><span class="fu"><a href="../reference/save_model_output.html">save_model_output</a></span><span class="op">(</span>model_name <span class="op">=</span> <span class="va">model_name</span>,</span>
-<span>                  fc_output <span class="op">=</span> <span class="va">data_fc_arx_epipred</span>,</span>
+<span>                  fc_output <span class="op">=</span> <span class="va">data_fc_climate_epipred</span>,</span>
 <span>                  <span class="va">reference_date</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Model output saved to model-output/AMPH-epipredict-climate/2024-12-07-AMPH-epipredict-climate.csv</span></span></code></pre>
 </div>
