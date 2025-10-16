@@ -1,5 +1,5 @@
 ---
-title: "Other: Introduction to panel data versioning and nowcasting"
+title: "2b: Introduction to panel data versioning and nowcasting"
 output:
   html_document:
     toc: true

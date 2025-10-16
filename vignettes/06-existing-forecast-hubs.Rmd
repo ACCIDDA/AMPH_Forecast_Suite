@@ -283,7 +283,6 @@ The RSV Scenario Modeling Hub is the newest addition to the scenario modeling hu
 - **Projection Type:** Scenario projections for RSV seasons
 - **Target Variables:**
   - RSV-associated hospitalizations
-  - Cases (when data available)
 - **Scenarios:** Focus on:
   - Vaccine and immunoprophylaxis uptake
   - Impact of new prevention tools
@@ -374,7 +373,7 @@ library(dplyr)
 
 ## Accessing Hub Data
 
-You can access data from these hubs programmatically:
+You can access data from these forecasting hubs using the provided functions below. Functions for accessing scenario projection hubs will be added soon.
 
 ```{r access-hub-data, eval=FALSE}
 # Clone a forecast hub repository
