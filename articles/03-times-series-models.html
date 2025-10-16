@@ -352,7 +352,11 @@ horizons of 7, 14, 21, and 28 days ahead (i.e., 1 to 4 weeks ahead).</p>
 <span>      args_list <span class="op">=</span> <span class="fu"><a href="https://cmu-delphi.github.io/epipredict/reference/arx_args_list.html" class="external-link">arx_args_list</a></span><span class="op">(</span></span>
 <span>        lags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">7</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>        ahead <span class="op">=</span> <span class="va">days_ahead</span>,</span>
-<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span><span class="op">)</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>,</span>
+<span>                            <span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.15</span>, <span class="fl">0.2</span>, <span class="fl">0.25</span>, <span class="fl">0.3</span>, <span class="fl">0.35</span>,</span>
+<span>                            <span class="fl">0.4</span>, <span class="fl">0.45</span>, <span class="fl">0.5</span>, <span class="fl">0.55</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>,</span>
+<span>                            <span class="fl">0.75</span>, <span class="fl">0.8</span>, <span class="fl">0.85</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>,</span>
+<span>                            <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
 <span>        nonneg <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
@@ -431,8 +435,12 @@ climatological model to the data. We specify a forecast horizon of 7,
 <span>  args_list <span class="op">=</span> <span class="fu"><a href="https://cmu-delphi.github.io/epipredict/reference/climate_args_list.html" class="external-link">climate_args_list</a></span><span class="op">(</span></span>
 <span>    forecast_horizon <span class="op">=</span> <span class="va">forecast_horizon_wks</span>,</span>
 <span>    time_type <span class="op">=</span> <span class="st">"week"</span>,</span>
-<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span><span class="op">)</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>    center_method <span class="op">=</span> <span class="st">"mean"</span>,</span>
+<span>        quantile_levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.025</span>,</span>
+<span>                            <span class="fl">0.05</span>, <span class="fl">0.1</span>, <span class="fl">0.15</span>, <span class="fl">0.2</span>, <span class="fl">0.25</span>, <span class="fl">0.3</span>, <span class="fl">0.35</span>,</span>
+<span>                            <span class="fl">0.4</span>, <span class="fl">0.45</span>, <span class="fl">0.5</span>, <span class="fl">0.55</span>, <span class="fl">0.6</span>, <span class="fl">0.65</span>, <span class="fl">0.7</span>,</span>
+<span>                            <span class="fl">0.75</span>, <span class="fl">0.8</span>, <span class="fl">0.85</span>, <span class="fl">0.9</span>, <span class="fl">0.95</span>,</span>
+<span>                            <span class="fl">0.975</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>    center_method <span class="op">=</span> <span class="st">"median"</span>,</span>
 <span>    quantile_by_key <span class="op">=</span> <span class="st">"geo_value"</span>,</span>
 <span>    forecast_date <span class="op">=</span> <span class="va">reference_date</span>,</span>
 <span>    nonneg <span class="op">=</span> <span class="cn">TRUE</span></span>
