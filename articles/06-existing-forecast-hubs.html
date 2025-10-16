@@ -35,11 +35,11 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/01-getting-started.html">1. Getting Started with AMPH Forecast Suite</a></li>
     <li><a class="dropdown-item" href="../articles/02-collect_empirical_data.html">2. Collect Empirical Data for Forecasting</a></li>
+    <li><a class="dropdown-item" href="../articles/02.1-nowcasting-demo.html">2b: Introduction to panel data versioning and nowcasting</a></li>
     <li><a class="dropdown-item" href="../articles/03-times-series-models.html">3. Forecasting with Time Series Models</a></li>
     <li><a class="dropdown-item" href="../articles/04-utilizing-hub-output.html">4. Ensembling, Visualization, and Scoring Forecasting Outputs</a></li>
     <li><a class="dropdown-item" href="../articles/05-convert_file_types.html">Other: Converting File Types</a></li>
     <li><a class="dropdown-item" href="../articles/06-existing-forecast-hubs.html">6. Existing Forecast and Scenario Projection Hubs</a></li>
-    <li><a class="dropdown-item" href="../articles/nowcasting-demo.html">Other: Introduction to panel data versioning and nowcasting</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -491,7 +491,6 @@ seasons</li>
 <strong>Target Variables:</strong>
 <ul>
 <li>RSV-associated hospitalizations</li>
-<li>Cases (when data available)</li>
 </ul>
 </li>
 <li>
@@ -655,7 +654,9 @@ forecast/projection accuracy and calibration</li>
 <div class="section level3">
 <h3 id="accessing-hub-data">Accessing Hub Data<a class="anchor" aria-label="anchor" href="#accessing-hub-data"></a>
 </h3>
-<p>You can access data from these hubs programmatically:</p>
+<p>You can access data from these forecasting hubs using the provided
+functions below. Functions for accessing scenario projection hubs will
+be added soon.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Clone a forecast hub repository</span></span>
 <span><span class="va">repo_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/clone_hub_repos.html">clone_hub_repos</a></span><span class="op">(</span></span>

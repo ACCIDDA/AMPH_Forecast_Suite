@@ -4,12 +4,12 @@ pkgdown_sha: ~
 articles:
   01-getting-started: 01-getting-started.html
   02-collect_empirical_data: 02-collect_empirical_data.html
+  02.1-nowcasting-demo: 02.1-nowcasting-demo.html
   03-times-series-models: 03-times-series-models.html
   04-utilizing-hub-output: 04-utilizing-hub-output.html
   05-convert_file_types: 05-convert_file_types.html
   06-existing-forecast-hubs: 06-existing-forecast-hubs.html
-  nowcasting-demo: nowcasting-demo.html
-last_built: 2025-10-15T20:49Z
+last_built: 2025-10-16T14:14Z
 urls:
   reference: https://accidda.github.io/AMPH_Forecast_Suite/reference
   article: https://accidda.github.io/AMPH_Forecast_Suite/articles
