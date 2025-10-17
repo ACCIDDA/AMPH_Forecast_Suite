@@ -129,11 +129,50 @@ plot_data <- ggplot() +
   xlab("Reference date") +
   ylab(signal) +
   #scale_y_continuous(trans = "log10") +
-  xlim(as.Date("2024-11-01"), as.Date(nowcast_date)) 
+  xlim(as.Date("2024-11-01"), as.Date(nowcast_date))
   ggtitle("Comparing real-time and later observed cases")
 plot_data
 ```
 We see that some revision occurred ! Let's try to fix these.
+
+### Visualizing all versions on the same plot
+
+Now let's create a plot showing all different report date versions in different colors on the same graph. This helps us understand how the data evolved over time as new reports came in.
+
+```{r plot-all-versions}
+# Get all unique report dates to create snapshots
+all_report_dates <- target_data %>%
+  pull(report_date) %>%
+  unique() %>%
+  sort()
+
+# Create a dataframe with the latest data available as of each report date
+# Using epinowcast::enw_latest_data() to properly get the latest value for each reference date
+all_versions <- map_dfr(all_report_dates, function(rd) {
+  target_data %>%
+    epinowcast::enw_filter_report_dates(latest_date = rd) %>%
+    epinowcast::enw_latest_data() %>%
+    mutate(version = rd)
+})
+
+# Create plot with all versions in different colors
+ggplot(all_versions, aes(x = reference_date, y = confirm, color = as.factor(version))) +
+  geom_line(linewidth = 0.8) +
+  theme_bw() +
+  xlab("Reference date") +
+  ylab(signal) +
+  labs(
+    title = "All Data Versions by Report Date",
+    subtitle = "Each color represents the data as it appeared on a different report date",
+    color = "Report Date"
+  ) +
+  scale_color_viridis_d(option = "D", end = 0.9) +
+  theme(legend.position = "right",
+        legend.key.height = unit(0.4, "cm")) +
+  xlim(as.Date("2024-11-01"), as.Date(nowcast_date))
+```
+
+This plot shows how the reported values for each reference date changed over time as more complete data became available. Earlier versions (earlier colors in the legend) show lower values due to reporting delays, while later versions show progressively higher and more complete counts.
 
 ## Build the Reporting Triangle
 
@@ -379,6 +418,54 @@ plot_data <- ggplot() +
 ```{r}
 plot_data
 ```
+
+### Visualizing all versions on the same plot (Germany data)
+
+Let's create the same visualization for the Germany dataset, showing all different report date versions in different colors.
+
+```{r plot-all-versions-germany}
+# Get report dates - sample monthly to avoid too many versions
+all_report_dates_germany <- target_data %>%
+  pull(report_date) %>%
+  unique() %>%
+  sort()
+
+# Select only the first day of each month (or closest available date)
+monthly_report_dates <- all_report_dates_germany %>%
+  as.Date() %>%
+  tibble(date = .) %>%
+  mutate(year_month = format(date, "%Y-%m")) %>%
+  group_by(year_month) %>%
+  slice_min(date, n = 1) %>%
+  pull(date)
+
+# Create a dataframe with the latest data available as of each monthly report date
+# Using epinowcast::enw_latest_data() to properly get the latest value for each reference date
+all_versions_germany <- map_dfr(monthly_report_dates, function(rd) {
+  target_data %>%
+    epinowcast::enw_filter_report_dates(latest_date = rd) %>%
+    epinowcast::enw_latest_data() %>%
+    mutate(version = rd)
+})
+
+# Create plot with all versions in different colors
+ggplot(all_versions_germany, aes(x = reference_date, y = confirm, color = as.factor(version))) +
+  geom_line(linewidth = 0.8) +
+  theme_bw() +
+  xlab("Reference date") +
+  ylab("Confirmed admissions") +
+  labs(
+    title = "All Data Versions by Report Date (Germany COVID-19)",
+    subtitle = "Monthly snapshots showing how the data evolved over time",
+    color = "Report Date"
+  ) +
+  scale_color_viridis_d(option = "D", end = 0.9) +
+  scale_y_continuous(trans = "log10") +
+  theme(legend.position = "right",
+        legend.key.height = unit(0.4, "cm"))
+```
+
+This visualization is much more interesting for the Germany dataset! You can clearly see how the reported values evolved significantly over time, with substantial revisions occurring as more complete data became available.
 
 ### Let's build the reporting triangle
 
