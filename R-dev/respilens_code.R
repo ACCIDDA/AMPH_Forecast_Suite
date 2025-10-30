@@ -762,8 +762,7 @@ main <- function() {
   metadata_payload <- build_metadata_file(forecast_df, locations_df)
   metadata_path <- file.path(output_dir, "metadata.json")
   save_json_payload(metadata_payload, metadata_path, TRUE)
-  log_message("INFO", sprintf("Successfully saved metadata.json"), context)
-
+  log_message("INFO", sprintf(paste0("Successfully saved RespiLens formatted metadata at ", metadata_path)), context)
   log_message("INFO", "Processing complete.", context)
   invisible(0)
 }

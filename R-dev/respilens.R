@@ -25,6 +25,7 @@
 
 
 library(AMPHForecastSuite)
+source("R-dev/respilens_main.R")
 
 # combine model outputs
 combine_model_outout <- function(comb_file_path = "respiLens-output/AMPH_forecasts_comb.csv") {
