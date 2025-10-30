@@ -125,7 +125,7 @@ get_nhsn_data <- function(disease = "influenza",
       issues = "*")
 
     epidata <- epidata %>%
-      dplyr::filter(issue <= issue_date_max) %>%
+      dplyr::filter(issue <= max(min(.$issue, na.rm = TRUE), issue_date_max, na.rm=TRUE)) %>%
       dplyr::filter(issue == max(issue)) # keep only most recent issue prior to issue_date_max
 
   } else {

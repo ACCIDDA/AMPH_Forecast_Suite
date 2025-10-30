@@ -146,16 +146,12 @@ projection_data_tbl <- hubUtils::as_model_out_tbl(prep_proj_data) %>%
 data(loc_data, package = "AMPHForecastSuite")
 
 projection_data_tbl2 <- projection_data_tbl %>%
+  dplyr::select(-location_name) %>%
   dplyr::left_join(
     loc_data %>%
-        mutate(location = tolower(abbreviation)) %>%
-            dplyr::select(location, location_name) %>%
-      bind_rows(
-        loc_data %>%
-          dplyr::select(location, location_name)),
+      dplyr::select(location, location_name),
     by = "location"
-  ) %>%
-  dplyr::mutate(location_name = dplyr::coalesce(location_name, location)) 
+  )
 
 dplyr::distinct(projection_data_tbl, model_id) %>% knitr::kable()
 
@@ -193,9 +189,9 @@ round_dat <- projection_data_tbl2 %>%
 round_ens <- hubEnsembles::simple_ensemble(
   round_dat %>%
     dplyr::filter(model_id %in% c("AMPH-SARIMA","AMPH-neuralnetwork", "MOBS-GLEAM_FLUH"))) %>% 
-    # dplyr::filter(!(model_id %in% c("FluSight-baseline", "AMPH-SARIMA","AMPH-neuralnetwork",
-    #                                 "FluSight-ensemble",
-    #                                 "AMPH-epipredict-climate")))) %>%
+  # dplyr::filter(!(model_id %in% c("FluSight-baseline", "AMPH-SARIMA","AMPH-neuralnetwork",
+  #                                 "FluSight-ensemble",
+  #                                 "AMPH-epipredict-climate")))) %>%
   mutate(model_id = "AMPH-ensemble")
 
 # Combine ensemble with individual models for plotting

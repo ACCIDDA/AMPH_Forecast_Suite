@@ -192,9 +192,9 @@ model_name <- "AMPH-neuralnetwork"
 
 fc_nnet <- forecast::nnetar(target_data$observation, 
                             lambda = "auto") %>%
-  forecast(PI = TRUE,
-           h = length(forecast_horizon_wks),
-           level = c(.1, .2, .3, .4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
+  forecast::forecast(PI = TRUE,
+                     h = length(forecast_horizon_wks),
+                     level = c(.1, .2, .3, .4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.98))
 
 ```
 
