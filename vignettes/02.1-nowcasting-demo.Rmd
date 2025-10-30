@@ -22,7 +22,7 @@ We focus on weekly confirmed hospital admissions attributed to influenza in Mary
 - estimate a reporting delay distribution, and
 - generate a deterministic point nowcast that corrects for under-reporting.
 
-We repeat these steps with TOODO
+We repeat these steps with data from the baselinenowcast documentation.
 
 ## Setup
 
@@ -89,8 +89,8 @@ Use `epidatr::pub_covidcast()` to pull National Healthcare Safety Network (NHSN)
       report_date = issue,
       confirm = value
     ) |>
-    enw_filter_report_dates(latest_date = eval_date) |>
-    enw_filter_reference_dates(latest_date = nowcast_date)
+    epinowcast::enw_filter_report_dates(latest_date = eval_date) |>
+    epinowcast::enw_filter_reference_dates(latest_date = nowcast_date)
   
     target_data$report_date %>% unique()
 ```
@@ -102,19 +102,19 @@ Here we have transformed the data so it is in the format for epinowcast, with co
 target_data
 ```
 
-Create two views of the data: the real-time version available on the nowcast date and the final version used for evaluation. This use very convenient filtering functions in epinowcast.  The epinowcast function `enw_latest_data()` filters observations to keep only the latest available reported total counts for each reference date.  The epinowcast function `enw_filter_report_dates()` is used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
+Create two views of the data: the real-time version available on the nowcast date and the final version used for evaluation. This use very convenient filtering functions in epinowcast.  The epinowcast function `epinowcast::enw_latest_data()` filters observations to keep only the latest available reported total counts for each reference date.  The epinowcast function `epinowcast::enw_filter_report_dates()` is used to create a truncated dataset for generating a retrospective nowcast, using the data that would have been available as of the nowcast date.
   
 ```{r realtime-latest}
-observed_data <- enw_filter_report_dates(target_data, latest_date = nowcast_date)
-obs_by_reference <- enw_latest_data(observed_data)
+observed_data <- epinowcast::enw_filter_report_dates(target_data, latest_date = nowcast_date)
+obs_by_reference <- epinowcast::enw_latest_data(observed_data)
 
-latest_data <- enw_latest_data(target_data) |>
-  enw_filter_reference_dates(latest_date = max(observed_data$reference_date))
+latest_data <- epinowcast::enw_latest_data(target_data) |>
+  epinowcast::enw_filter_reference_dates(latest_date = max(observed_data$reference_date))
 ```
 
 Let's plot our two datasets, the red line shows the total number of confirmed admissions on each reference date, across all delays, using the data available at the nowcast date, whereas the blackline show the final value of the data.
 ``` {r}
-obs_data_by_reference_date <- enw_latest_data(observed_data)
+obs_data_by_reference_date <- epinowcast::enw_latest_data(observed_data)
 
 plot_data <- ggplot() +
   geom_line(
@@ -129,11 +129,50 @@ plot_data <- ggplot() +
   xlab("Reference date") +
   ylab(signal) +
   #scale_y_continuous(trans = "log10") +
-  xlim(as.Date("2024-11-01"), as.Date(nowcast_date)) 
+  xlim(as.Date("2024-11-01"), as.Date(nowcast_date))
   ggtitle("Comparing real-time and later observed cases")
 plot_data
 ```
 We see that some revision occurred ! Let's try to fix these.
+
+### Visualizing all versions on the same plot
+
+Now let's create a plot showing all different report date versions in different colors on the same graph. This helps us understand how the data evolved over time as new reports came in.
+
+```{r plot-all-versions}
+# Get all unique report dates to create snapshots
+all_report_dates <- target_data %>%
+  pull(report_date) %>%
+  unique() %>%
+  sort()
+
+# Create a dataframe with the latest data available as of each report date
+# Using epinowcast::enw_latest_data() to properly get the latest value for each reference date
+all_versions <- map_dfr(all_report_dates, function(rd) {
+  target_data %>%
+    epinowcast::enw_filter_report_dates(latest_date = rd) %>%
+    epinowcast::enw_latest_data() %>%
+    mutate(version = rd)
+})
+
+# Create plot with all versions in different colors
+ggplot(all_versions, aes(x = reference_date, y = confirm, color = as.factor(version))) +
+  geom_line(linewidth = 0.8) +
+  theme_bw() +
+  xlab("Reference date") +
+  ylab(signal) +
+  labs(
+    title = "All Data Versions by Report Date",
+    subtitle = "Each color represents the data as it appeared on a different report date",
+    color = "Report Date"
+  ) +
+  scale_color_viridis_d(option = "D", end = 0.9) +
+  theme(legend.position = "right",
+        legend.key.height = unit(0.4, "cm")) +
+  xlim(as.Date("2024-11-01"), as.Date(nowcast_date))
+```
+
+This plot shows how the reported values for each reference date changed over time as more complete data became available. Earlier versions (earlier colors in the legend) show lower values due to reporting delays, while later versions show progressively higher and more complete counts.
 
 ## Build the Reporting Triangle
 
@@ -145,19 +184,19 @@ max_delay <- 4 # weeks
 n_training_volume <- 8*7 # days (30 weeks)
 ```
 
-Next we will use the epinowcast function, `enw_filter_reference_dates()` to filter to only include n_training_volume days of historical data, and the epinowcast function `enw_latest_data()` will be used to filter for the latest available reported total counts for each reference date. Finally to obtain the data we want to evaluate the forecasts against, we will use enw_filter_reference_dates() applied to the target_data, to filter it for only the n_training_volume days of historical data.
+Next we will use the epinowcast function, `epinowcast::enw_filter_reference_dates()` to filter to only include n_training_volume days of historical data, and the epinowcast function `epinowcast::enw_latest_data()` will be used to filter for the latest available reported total counts for each reference date. Finally to obtain the data we want to evaluate the forecasts against, we will use epinowcast::enw_filter_reference_dates() applied to the target_data, to filter it for only the n_training_volume days of historical data.
 
 ``` {r}
-training_data <- enw_filter_reference_dates(observed_data, include_days = n_training_volume)
+training_data <- epinowcast::enw_filter_reference_dates(observed_data, include_days = n_training_volume)
 
-latest_training_data <- enw_latest_data(training_data)
+latest_training_data <- epinowcast::enw_latest_data(training_data)
 
-eval_data <- enw_filter_reference_dates(latest_data, include_days = n_training_volume-1)
+eval_data <- epinowcast::enw_filter_reference_dates(latest_data, include_days = n_training_volume-1)
 
 ```
   
 ``` {r}
-pobs <- enw_preprocess_data(
+pobs <- epinowcast::enw_preprocess_data(
   obs = training_data,
   max_delay = max_delay+2,
   timestep="week",
@@ -219,7 +258,7 @@ We use half of the available reference weeks to estimate the delay distribution 
 # most recent 50% of the reference times for delay estimation
 n_history_delay <- as.integer(0.5 * n_training_volume) # days
 
-delay_pmf <- estimate_delay(
+delay_pmf <- baselinenowcast::estimate_delay(
   reporting_triangle = reporting_triangle,
   max_delay = max_delay,
   n = n_history_delay/7
@@ -258,7 +297,7 @@ delay_pmf_plot
 ## Apply the delay to generate a point nowcast
 
 ``` {r}
-point_nowcast_matrix <- apply_delay(
+point_nowcast_matrix <- baselinenowcast::apply_delay(
   reporting_triangle = reporting_triangle,
   delay_pmf = delay_pmf
 )
@@ -322,7 +361,7 @@ To see larger adjustments, experiment with other locations, earlier nowcast date
 
 ## Next Steps
 
-- Use `estimate_and_apply_uncertainty()` to obtain probabilistic nowcast
+- Use `baselinenowcast::estimate_and_apply_uncertainty()` to obtain probabilistic nowcast
   intervals if you need calibrated uncertainty estimates.
 - Adjust the training window (`n_training_weeks`) or `max_delay` to match the
   reporting dynamics of other diseases or locations.
@@ -342,13 +381,13 @@ We will work on a more interesting dataset: daily level data from the Robert Koc
 nowcast_date <- "2021-08-01"
 eval_date <- "2021-10-01"
 
-target_data <- germany_covid19_hosp[location == "DE"][age_group == "00+"] |>
-  enw_filter_report_dates(latest_date = eval_date) |>
-  enw_filter_reference_dates(
+target_data <- epinowcast::germany_covid19_hosp[location == "DE"][age_group == "00+"] |>
+  epinowcast::enw_filter_report_dates(latest_date = eval_date) |>
+  epinowcast::enw_filter_reference_dates(
     latest_date = nowcast_date
   )
-latest_data <- enw_latest_data(target_data)
-observed_data <- enw_filter_report_dates(
+latest_data <- epinowcast::enw_latest_data(target_data)
+observed_data <- epinowcast::enw_filter_report_dates(
   target_data,
   latest_date = nowcast_date
 )
@@ -359,7 +398,7 @@ head(observed_data)
 <details><summary>Click to expand code to create the plot of the latest data</summary>
 
 ```{r}
-obs_data_by_reference_date <- enw_latest_data(observed_data)
+obs_data_by_reference_date <- epinowcast::enw_latest_data(observed_data)
 plot_data <- ggplot() +
   geom_line(
     data = obs_data_by_reference_date,
@@ -380,6 +419,54 @@ plot_data <- ggplot() +
 plot_data
 ```
 
+### Visualizing all versions on the same plot (Germany data)
+
+Let's create the same visualization for the Germany dataset, showing all different report date versions in different colors.
+
+```{r plot-all-versions-germany}
+# Get report dates - sample monthly to avoid too many versions
+all_report_dates_germany <- target_data %>%
+  pull(report_date) %>%
+  unique() %>%
+  sort()
+
+# Select only the first day of each month (or closest available date)
+monthly_report_dates <- all_report_dates_germany %>%
+  as.Date() %>%
+  tibble(date = .) %>%
+  mutate(year_month = format(date, "%Y-%m")) %>%
+  group_by(year_month) %>%
+  slice_min(date, n = 1) %>%
+  pull(date)
+
+# Create a dataframe with the latest data available as of each monthly report date
+# Using epinowcast::enw_latest_data() to properly get the latest value for each reference date
+all_versions_germany <- map_dfr(monthly_report_dates, function(rd) {
+  target_data %>%
+    epinowcast::enw_filter_report_dates(latest_date = rd) %>%
+    epinowcast::enw_latest_data() %>%
+    mutate(version = rd)
+})
+
+# Create plot with all versions in different colors
+ggplot(all_versions_germany, aes(x = reference_date, y = confirm, color = as.factor(version))) +
+  geom_line(linewidth = 0.8) +
+  theme_bw() +
+  xlab("Reference date") +
+  ylab("Confirmed admissions") +
+  labs(
+    title = "All Data Versions by Report Date (Germany COVID-19)",
+    subtitle = "Monthly snapshots showing how the data evolved over time",
+    color = "Report Date"
+  ) +
+  scale_color_viridis_d(option = "D", end = 0.9) +
+  scale_y_continuous(trans = "log10") +
+  theme(legend.position = "right",
+        legend.key.height = unit(0.4, "cm"))
+```
+
+This visualization is much more interesting for the Germany dataset! You can clearly see how the reported values evolved significantly over time, with substantial revisions occurring as more complete data became available.
+
 ### Let's build the reporting triangle
 
 ```{r}
@@ -389,19 +476,19 @@ n_history_delay <- as.integer(0.5 * n_training_volume)
 ```
 
 ```{r}
-training_data <- enw_filter_reference_dates(
+training_data <- epinowcast::enw_filter_reference_dates(
   observed_data,
   include_days = n_training_volume - 1
 )
-latest_training_data <- enw_latest_data(training_data)
-eval_data <- enw_filter_reference_dates(
+latest_training_data <- epinowcast::enw_latest_data(training_data)
+eval_data <- epinowcast::enw_filter_reference_dates(
   latest_data,
   include_days = n_training_volume - 1
 )
 ```
 
 ```{r}
-pobs <- enw_preprocess_data(
+pobs <- epinowcast::enw_preprocess_data(
   obs = training_data,
   max_delay = max_delay + 1
 )
@@ -488,7 +575,7 @@ delay_pmf_plot
 ### Generate nowcast with delay
 
 ```{r}
-point_nowcast_matrix <- apply_delay(
+point_nowcast_matrix <- baselinenowcast::apply_delay(
   reporting_triangle = reporting_triangle,
   delay_pmf = delay_pmf
 )
@@ -550,17 +637,17 @@ For uncertainty estimation, we will generate retrospective nowcast datasets with
 n_retrospective_nowcasts <- as.integer(0.5 * n_training_volume)
 
 
-trunc_rep_tri_list <- truncate_triangles(reporting_triangle,
+trunc_rep_tri_list <- baselinenowcast::truncate_triangles(reporting_triangle,
   n = n_retrospective_nowcasts
 )
-retro_rep_tri_list <- construct_triangles(trunc_rep_tri_list)
+retro_rep_tri_list <- baselinenowcast::construct_triangles(trunc_rep_tri_list)
 
-retro_pt_nowcast_mat_list <- fill_triangles(
+retro_pt_nowcast_mat_list <- baselinenowcast::fill_triangles(
   retro_reporting_triangles = retro_rep_tri_list,
   n = n_history_delay
 )
 
-disp_params <- estimate_uncertainty(
+disp_params <- baselinenowcast::estimate_uncertainty(
   point_nowcast_matrices = retro_pt_nowcast_mat_list,
   truncated_reporting_triangles = trunc_rep_tri_list,
   retro_reporting_triangles = retro_rep_tri_list,
@@ -569,7 +656,7 @@ disp_params <- estimate_uncertainty(
 ```
 
 ```{r}
-nowcast_draws_df <- sample_nowcasts(
+nowcast_draws_df <- baselinenowcast::sample_nowcasts(
   point_nowcast_matrix, reporting_triangle,
   uncertainty_params = disp_params,
   draws = 100

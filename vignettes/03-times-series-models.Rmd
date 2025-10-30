@@ -278,7 +278,11 @@ arx_forecast <- lapply(
       args_list = arx_args_list(
         lags = list(c(0, 7, 14)),
         ahead = days_ahead,
-        quantile_levels = c(0.01, 0.025, seq(.05, .95, .05), 0.975, 0.99),
+        quantile_levels = c(0.01, 0.025,
+                            0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35,
+                            0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
+                            0.75, 0.8, 0.85, 0.9, 0.95,
+                            0.975, 0.99),
         nonneg = TRUE
       )
     )
@@ -354,8 +358,12 @@ climate_forecast <- epipredict::climatological_forecaster(
   args_list = climate_args_list(
     forecast_horizon = forecast_horizon_wks,
     time_type = "week",
-        quantile_levels = c(0.01, 0.025, seq(.05, .95, .05), 0.975, 0.99),
-    center_method = "mean",
+        quantile_levels = c(0.01, 0.025,
+                            0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35,
+                            0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
+                            0.75, 0.8, 0.85, 0.9, 0.95,
+                            0.975, 0.99),
+    center_method = "median",
     quantile_by_key = "geo_value",
     forecast_date = reference_date,
     nonneg = TRUE
@@ -384,7 +392,7 @@ autoplot(
 ```{r save-clim-output}
 
 # Transform to hubVerse format
-hub_forecast <- trans_epipredclim_hv(fc_output = climate_forecast,
+data_fc_climate_epipred <- trans_epipredclim_hv(fc_output = climate_forecast,
                                      model_name = model_name,
                                      target = target,
                                      reference_date = reference_date,
@@ -393,6 +401,6 @@ hub_forecast <- trans_epipredclim_hv(fc_output = climate_forecast,
 ## Save data file
 #' -- this will have validation build in for fluid workflow eventually.
 save_model_output(model_name = model_name,
-                  fc_output = data_fc_arx_epipred,
+                  fc_output = data_fc_climate_epipred,
                   reference_date)
 ```
