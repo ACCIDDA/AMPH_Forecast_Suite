@@ -20,6 +20,11 @@ setup_file_structure <- function(project_dir = "AMPH_forecast_project") {
     stop("project_dir must be a single character string.")
   }
 
+  if (project_dir == "") {
+    message("Using current working directory as project directory.")
+    project_dir <- getwd()
+  }
+
   dir.create(project_dir, recursive = TRUE, showWarnings = FALSE)
   setwd(project_dir)
   dir.create("model-output")
@@ -28,3 +33,4 @@ setup_file_structure <- function(project_dir = "AMPH_forecast_project") {
   message("Directory setup complete!")
   invisible(NULL)
 }
+
