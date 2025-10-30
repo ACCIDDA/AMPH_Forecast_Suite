@@ -43,7 +43,6 @@ install_forecast_packages()
 # Install only hubverse packages
 install_forecast_packages(install_forecasting = FALSE,
                          install_epi = FALSE,
-                         install_data = FALSE,
-                         install_nowcast = FALSE)
+                         install_data = FALSE)
 }
 }

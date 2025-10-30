@@ -4,7 +4,7 @@
 \alias{save_model_output}
 \title{Check and Save Model Output for Forecasting Hub}
 \usage{
-save_model_output(model_name = "AMPH-SARIMA", fc_output, forecast_date)
+save_model_output(model_name = "AMPH-SARIMA", fc_output, reference_date)
 }
 \arguments{
 \item{model_name}{Character. Name of the forecasting model (e.g., "AMPH-SARIMA").}
