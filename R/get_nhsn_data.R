@@ -48,7 +48,7 @@
 #' @importFrom dplyr filter mutate select
 #' @importFrom lubridate as_date
 #'
-get_nhsn_data <- function(disease = "influenza",
+get_nhsn_data <- function(disease = "flu",
                           geo_values = "MD",
                           forecast_date = "2025-10-12",
                           save_data = TRUE
@@ -56,7 +56,12 @@ get_nhsn_data <- function(disease = "influenza",
 
   # Validate disease parameter
   disease <- tolower(disease)
-  valid_diseases <- c("influenza", "covid", "rsv")
+  if (disease == "influenza") {
+    disease <- "flu"
+  } else if (disease == "covid19") {
+    disease <- "covid"
+  }
+  valid_diseases <- c("flu", "covid", "rsv")
 
   geo_values <- tolower(geo_values)
 
@@ -105,7 +110,7 @@ get_nhsn_data <- function(disease = "influenza",
   # Map disease names to NHSN signal names
   # Based on epidatr NHSN signals for respiratory diseases
   signal_map <- list(
-    "influenza" = "confirmed_admissions_flu_ew",
+    "flu" = "confirmed_admissions_flu_ew",
     "covid" = "confirmed_admissions_covid_ew",
     "rsv" = "confirmed_admissions_rsv_ew"
   )
